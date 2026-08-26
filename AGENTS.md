@@ -11,8 +11,9 @@ here, everything else falls through to invoke's inline annotations.
 - Verification lives in the consumer: `repo-tasks` depends on this package and its
   `inv quality.type-check` is the test (`from invoke import task` typed, zero
   `reportPrivateImportUsage`/`reportUntypedFunctionDecorator`). See
-  `repo-tasks/plans/2026-08-25-type-check-warning-noise.md` for why this exists and the upstream
-  status.
+  `repo-tasks/contributing/type-checking.md` for why this exists and why it ships as a PEP 561
+  partial stub distribution rather than via `stubPath`, and
+  `repo-tasks/plans/2026-08-26-typing-followups.md` for the upstream-contribution status.
 - Consumers install it by git URL (`invoke-stubs @ git+https://github.com/TheodoreAD/invoke-stubs`),
   so a push to `main` is a release. Bump `version` in `pyproject.toml` on any stub change so
   `uv lock --upgrade-package invoke-stubs` has something to move to.
