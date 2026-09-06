@@ -91,7 +91,11 @@ remains is *which modules*, and it is a transitive closure rather than a list �
 in `parser` (`to_contexts` returns `ParserContext`) and `tasks`; `context` pulls in `runners`
 (`run` returns `Result`), `config` and `watchers`.]
 
-### 3. Go non-partial, and ship all twelve modules
+### 3. Ship all twelve modules — and, as chosen at the time, go non-partial
+
+**Half of this was superseded within the hour by section 4: the modules shipped, the marker did
+not.** The reasoning is kept because it is what the shipped work was built on, and because the
+measurements in it are still the ones that justify the module set.
 
 Chosen 2026-09-06 over three narrower options: a consumer-facing subset of five modules (~96
 members), a minimal three (~24, leaving `Result` unknown), and leaving the stubs alone.
@@ -115,7 +119,7 @@ Hence two phases, in this order and not the other:
    repos that have invoke and closes its own names for repos that do not. Verifiable one file at a
    time.
 2. **Empty `py.typed` only once all twelve exist.** `invoke.parser` is a package upstream, so it
-   needs a `parser/__init__.pyi` rather than a flat `parser.pyi`.
+   needs a `parser/__init__.pyi` rather than a flat `parser.pyi`. — **Withdrawn; see section 4.**
 
 **Phase 1 landed 2026-09-06**, and two things about it were wrong in the paragraphs above.
 
@@ -136,14 +140,48 @@ walking invoke's own AST for `self.<name> =` and typing each from the matching `
 parameter. Any future regeneration needs that pass, and `--createstub` run in a virtualenv that
 also holds *this* package stubs these files rather than invoke's.]
 
-[DEFERRED: dropping `allowedUntypedLibraries: ["invoke"]` from the family's `pyrightconfig.json`
-once phase 2 lands. It is the upside that motivated going this far, but it is a change in four other
-repos, each of which has to be re-checked at zero warnings, and none of them is blocked meanwhile.]
+### 4. Phase 2 should not happen — its premise did not survive being tested
 
-[DEFERRED: `env`, `completion`, `main` and the vendored packages are still undeclared, and phase 2
-cannot flip the marker until they are — emptying `py.typed` would strand
-`from invoke.util import cd`-shaped imports with no fallback. Nothing in the family imports them
-today, which is why phase 1 did not block on them.]
+Measured 2026-09-06, immediately after phase 1 landed and before writing any phase-2 stub.
+
+**The upside phase 2 was chosen for is already delivered.** Dropping
+`allowedUntypedLibraries: ["invoke"]` was the reason to go non-partial. With the `partial` marker
+still in place, phase 1's modules, and that setting removed from the checker config, a consumer
+exercising the whole surface — `Collection`, `Config`, `Context`, `MockContext`, `Result`,
+`UnexpectedExit`, `Local`, `assert_type(ns, Collection)`, the `.body` declaration — is clean: 0
+errors, 0 warnings. The setting is redundant now, and flipping the marker is not what made it so.
+
+**And the flip has a cost with nothing on the other side of it.** In the same clean environment,
+`from invoke.env import Environment` type-checks under `partial` and becomes
+`reportMissingImports` under a non-partial marker, because `env` is not shipped and there is no
+longer anything to fall back to. That is the whole observable difference between the two markers
+once phase 1 exists: the same consumer code, one hard error worse.
+
+Closing that gap means declaring `env`, `completion`, `main`, `__main__`, `_version` and invoke's
+vendored packages — including its vendored yaml, by far the largest thing in the distribution — to
+buy back a diagnostic that only appears because the marker was flipped.
+
+[DECISION: Stay `partial`, permanently. The two-phase plan was written when the marker looked like
+what made the stubs authoritative; the measurement says the *modules* do that and the marker only
+removes a fallback that is currently working. Phase 2 is therefore not deferred pending effort — it
+is withdrawn, and `py.typed` keeps saying `partial` as a positive choice rather than a stepping
+stone.]
+
+[PITFALL: **A site-packages directory that has been hand-edited across several experiments stops
+being evidence, and says so in no way at all.** The first non-partial run in this session reported 6
+errors and 27 warnings, including a hit on the `repo-tasks` contract assertion, and it was entirely
+an artifact of a probe venv whose stub files had been swapped by hand a dozen times — `uv pip
+install --reinstall-package` did not clear it, and a diff of the one file suspicion fell on came
+back identical. A fresh virtualenv, same package, same marker: 0 errors. Any result that would
+change a decision gets re-run in a venv built for that run.]
+
+[DEFERRED: dropping `allowedUntypedLibraries: ["invoke"]` from the family's `pyrightconfig.json`.
+Now unblocked rather than waiting on phase 2 — but it is a change in four other repos, each of which
+has to be re-checked at zero warnings, and none of them is blocked meanwhile.]
+
+`env`, `completion`, `main` and the vendored packages stay undeclared, and under a `partial` marker
+that costs nothing — they resolve to invoke's inline annotations exactly as before. Section 4 below
+records why that is now the end state rather than a phase-2 backlog.
 
 [DEFERRED: removing `ingesta`'s 59 suppressions. They are in another repo, so they are that repo's
 session to make, and `reportUnnecessaryTypeIgnoreComment` will name each one on its next gate run
@@ -170,10 +208,9 @@ Done in phase 1:
 - `AGENTS.md`, `README.md` — the "keep it partial" rule and the two-things-fixed framing both
   described the old design.
 
-Still owed, in phase 2:
+Not touched, and now deliberately not:
 
-- `invoke-stubs/py.typed` — `partial` emptied, once `env`, `completion`, `main` and the vendored
-  packages are declared and not before.
+- `invoke-stubs/py.typed` — stays `partial`. See design section 4.
 
 ## Verification
 
