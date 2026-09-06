@@ -1,0 +1,29 @@
+from typing import Any, Iterable
+
+class Argument:
+    def __init__(
+        self,
+        name: str | None = ...,
+        names: Iterable[str] = ...,
+        kind: Any = ...,
+        default: Any | None = ...,
+        help: str | None = ...,  # noqa: A002 — invoke's own keyword name
+        positional: bool = ...,
+        optional: bool = ...,
+        incrementable: bool = ...,
+        attr_name: str | None = ...,
+    ) -> None: ...
+    def __repr__(self) -> str: ...
+    @property
+    def name(self) -> str | None: ...
+    @property
+    def nicknames(self) -> tuple[str, ...]: ...
+    @property
+    def takes_value(self) -> bool: ...
+    @property
+    def value(self) -> Any: ...
+    @value.setter
+    def value(self, arg: str) -> None: ...
+    def set_value(self, value: Any, cast: bool = ...) -> None: ...
+    @property
+    def got_value(self) -> bool: ...

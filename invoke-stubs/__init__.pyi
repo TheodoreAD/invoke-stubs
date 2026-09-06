@@ -2,7 +2,15 @@
 # re-export to count as public in a typed package. invoke uses plain `from .tasks import task  # noqa`,
 # which type checkers read as an implementation detail — so `from invoke import task` reports
 # `reportPrivateImportUsage` (pyright) / `no_implicit_reexport` (mypy --strict) against the inline
-# package. Everything except `.tasks` resolves to invoke's inline annotations (`py.typed` = partial).
+# package.
+#
+# Every module named below is now shipped here, plus `util`, which several of them need. `py.typed`
+# still says `partial` because `env`, `completion`, `main` and the vendored packages are not
+# shipped: until they are, the marker is what keeps those resolvable for a consumer that does have
+# invoke installed. See plans/2026-08-30-missing-collection-and-context-stubs.md for why the marker
+# moves last rather than first.
+
+from typing import Any
 
 from .collection import Collection as Collection
 from .config import Config as Config
@@ -47,7 +55,6 @@ from .watchers import (
     Responder as Responder,
     StreamWatcher as StreamWatcher,
 )
-from typing import Any
 
 __version__: str
 
