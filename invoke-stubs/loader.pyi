@@ -2,7 +2,7 @@ from importlib.machinery import ModuleSpec
 from types import ModuleType
 from typing import Any
 
-from . import Config
+from .config import Config
 
 class Loader:
     config: Config | None

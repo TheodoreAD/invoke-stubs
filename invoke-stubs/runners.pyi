@@ -5,6 +5,12 @@ from types import TracebackType
 from typing import IO, Any, Callable, Generator
 
 from .context import Context
+
+# `Failure` is defined in `.exceptions`, but invoke's own `__init__.py` re-exports it from here
+# (`from .runners import Failure, Local, Promise, Result, Runner`), so this module has to carry it
+# or that re-export dangles. `as Failure` because a stub's imports are private unless redundantly
+# aliased, and the package `__init__.pyi` imports it from this module by name.
+from .exceptions import Failure as Failure
 from .util import ExceptionHandlingThread
 from .watchers import StreamWatcher
 
@@ -118,8 +124,11 @@ class Promise(Result, AbstractContextManager):
     def __init__(self, runner: Runner) -> None: ...
     def join(self) -> Result: ...
     def __enter__(self) -> Promise: ...
+    # `exc_value` is widened to include None against invoke's own annotation, which declares a bare
+    # `BaseException` and so does not satisfy `AbstractContextManager.__exit__` — a normal, no-error
+    # `with` block passes None for all three.
     def __exit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException, exc_tb: TracebackType | None
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, exc_tb: TracebackType | None
     ) -> None: ...
     def __repr__(self) -> str: ...
 

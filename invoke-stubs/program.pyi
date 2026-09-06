@@ -1,16 +1,27 @@
 from typing import Sequence
 
-from . import Collection, Config, Executor
+# Imported from the defining modules rather than from `.` as invoke's own program.py does: the
+# package __init__ imports Program back, and a stub need not reproduce that cycle.
+from .collection import Collection
+from .config import Config
+from .executor import Executor
 from .loader import Loader
 from .parser import Argument, Parser, ParserContext, ParseResult
 from .util import Lexicon
 
 class Program:
+    argv: list[str]
+    col_padding: int
     collection: Collection
     config: Config
     config_class: type[Config] | None
+    core: ParseResult
     core_via_tasks: ParserContext
     executor_class: type[Executor] | None
+    indent: str
+    indent_width: int
+    leading_indent: str
+    leading_indent_width: int
     list_depth: int | None
     list_format: str
     list_root: str | None
@@ -20,17 +31,9 @@ class Program:
     scoped_collection: Collection
     tasks: ParseResult
     version: str | None
-    core: ParseResult
 
     def core_args(self) -> list[Argument]: ...
     def task_args(self) -> list[Argument]: ...
-    argv: list[str]
-    leading_indent_width: int
-    leading_indent: str
-    indent_width: int
-    indent: str
-    col_padding: int
-
     def __init__(
         self,
         version: str | None = ...,
