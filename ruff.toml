@@ -1,0 +1,13 @@
+# Added when the stub modules grew past what was readable unformatted. There is no quality gate in
+# this repo — no runtime code and no suite of its own — so this file exists to make the formatting
+# reproducible rather than to be enforced: `uvx ruff format .` and `uvx ruff check --select I --fix .`
+# both read it.
+#
+# `line-length` matches the rest of the personal repo family.
+line-length = 120
+
+[lint.isort]
+# Without this, the sorter rewrites `__init__.pyi`'s single re-export block into one `from X import`
+# statement per name — the `import X as X` form PEP 484 requires for a public re-export looks like a
+# duplicate import to it. Confirmed by it doing exactly that, 2026-09-06.
+combine-as-imports = true
