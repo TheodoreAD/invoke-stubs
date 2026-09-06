@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 updated: 2026-09-06
 ---
 
@@ -117,31 +117,63 @@ Hence two phases, in this order and not the other:
 2. **Empty `py.typed` only once all twelve exist.** `invoke.parser` is a package upstream, so it
    needs a `parser/__init__.pyi` rather than a flat `parser.pyi`.
 
+**Phase 1 landed 2026-09-06**, and two things about it were wrong in the paragraphs above.
+
+`util` is not optional and was not a phase-2 concern: `runners` and `exceptions` take
+`ExceptionHandlingThread`/`ExceptionWrapper` from it and `program` takes `Lexicon`, so it shipped
+with phase 1 as a twelfth module. Its `Lexicon` is **declared** rather than imported from
+`.vendor.lexicon`, which stops the closure before it reaches invoke's vendored libraries — the same
+call was made for `ParseMachine`, whose vendored `StateMachine` base is dropped. Neither forks an
+identity the way inlining did, because the vendored paths are not shipped and so have no second
+resolution to disagree with.
+
+[PITFALL: **`basedpyright --createstub` emits methods, properties and class-level names, and
+silently drops every attribute a class assigns to `self`.** A generated `runners.pyi` looked
+complete and had no `Result.exited`, `.stdout` or `.stderr` — the attributes every consumer of a
+`c.run(...)` result actually reads. It surfaced only because the probe read `result.exited`; a stub
+reviewed by eye would have passed. 47 attributes across 13 classes were missing, recovered by
+walking invoke's own AST for `self.<name> =` and typing each from the matching `__init__`
+parameter. Any future regeneration needs that pass, and `--createstub` run in a virtualenv that
+also holds *this* package stubs these files rather than invoke's.]
+
 [DEFERRED: dropping `allowedUntypedLibraries: ["invoke"]` from the family's `pyrightconfig.json`
 once phase 2 lands. It is the upside that motivated going this far, but it is a change in four other
 repos, each of which has to be re-checked at zero warnings, and none of them is blocked meanwhile.]
 
-[DEFERRED: `invoke.util`, `env`, `completion`, `main` and `vendor` are not re-exported by
-`__init__.pyi` and are not covered by phase 1. Nothing in the family imports them, so non-partial
-does not strand anything today — but a consumer that later does `from invoke.util import cd` will
-find it unresolvable with no fallback, and that is a worse error than today's.]
+[DEFERRED: `env`, `completion`, `main` and the vendored packages are still undeclared, and phase 2
+cannot flip the marker until they are — emptying `py.typed` would strand
+`from invoke.util import cd`-shaped imports with no fallback. Nothing in the family imports them
+today, which is why phase 1 did not block on them.]
+
+[DEFERRED: removing `ingesta`'s 59 suppressions. They are in another repo, so they are that repo's
+session to make, and `reportUnnecessaryTypeIgnoreComment` will name each one on its next gate run
+after it takes 0.2.0.]
 
 [UNVERIFIED: the whole design is measured on basedpyright 1.39.10 only. The README claims mypy
 support, and mypy's partial-stub and shadowing behaviour was not exercised in any of these runs.]
 
 ## Files touched
 
-- `invoke-stubs/collection.pyi`, `context.pyi`, `exceptions.pyi`, `config.pyi`, `runners.pyi`,
-  `parser/__init__.pyi`, `program.pyi`, `executor.pyi`, `loader.pyi`, `terminals.pyi`,
-  `watchers.pyi` — new, one per module `__init__.pyi` re-exports from, each complete for its module.
-- `invoke-stubs/py.typed` — `partial` emptied, in phase 2 and only then.
-- `invoke-stubs/__init__.pyi` — unchanged in shape; it already names every module correctly.
-- `pyproject.toml` — `version` bump, since consumers install by git URL and a push to `main` is the
-  release.
-- `AGENTS.md` — "Keep it partial" and the rule beneath it are reversed by this and must be rewritten
-  rather than left standing.
-- `README.md` — the `py.typed` paragraph and the two-things-fixed framing both describe the partial
-  design.
+Done in phase 1:
+
+- `invoke-stubs/collection.pyi`, `config.pyi`, `context.pyi`, `exceptions.pyi`, `executor.pyi`,
+  `loader.pyi`, `program.pyi`, `runners.pyi`, `terminals.pyi`, `util.pyi`, `watchers.pyi` and
+  `parser/` (`__init__.pyi`, `argument.pyi`, `context.pyi`, `parser.pyi`) — new, each complete for
+  its module.
+- `invoke-stubs/__init__.pyi` — unchanged in shape, as expected; only its header comment, which
+  claimed everything but `.tasks` fell through to invoke.
+- `ruff.toml` — new, and not foreseen above. The generated modules are unreadable unformatted, and
+  `combine-as-imports` is needed or the sorter splits `__init__.pyi`'s re-export block one name per
+  line. There is no gate in this repo, so it records the formatting rather than enforcing it.
+- `pyproject.toml` — `version` 0.1.0 to 0.2.0, since consumers install by git URL and a push to
+  `main` is the release.
+- `AGENTS.md`, `README.md` — the "keep it partial" rule and the two-things-fixed framing both
+  described the old design.
+
+Still owed, in phase 2:
+
+- `invoke-stubs/py.typed` — `partial` emptied, once `env`, `completion`, `main` and the vendored
+  packages are declared and not before.
 
 ## Verification
 
@@ -149,14 +181,20 @@ The consumer configuration is the test, and it is the one nobody was running: a 
 absent** type-checking a task module. Both probes are throwaway virtualenvs, not fixtures in this
 repo, since this repo has no suite of its own.
 
-1. Invoke absent, stubs installed: a module importing `Collection`, `Context`, `Exit` and `task` and
-   calling `Collection.from_module`, `add_task` and `c.run` reports **only**
-   `reportMissingModuleSource`. Baseline for comparison is 4 errors + 9 warnings.
-2. Invoke installed, stubs installed: the same module, plus `Collection.configuration()` and
-   `from invoke.collection import Collection`, reports nothing at all. This is the regression test
-   for both rejected shapes — it is what inlining and partial-module stubs each break.
-3. `repo-tasks`' `inv quality.type-check` stays at zero, per this repo's `AGENTS.md`. It is the only
-   consumer with a real suite, and it has invoke installed, so it exercises case 2 and not case 1.
-4. `ingesta`'s gate after the stale suppressions are removed — `reportUnnecessaryTypeIgnoreComment`
-   is an error there, so it will name every one of the 59 that is no longer needed. That count going
-   to near-zero is the outcome measure for the whole plan.
+1. **Passing.** Invoke absent, stubs installed: a module importing `Collection`, `Context`, `Exit`
+   and `task` and calling `Collection.from_module`, `add_task`, `c.run` and `result.exited` reports
+   **only** `reportMissingModuleSource`. Baseline was 4 errors + 9 warnings.
+2. **Passing.** Invoke installed, stubs installed: the same module, plus `Collection.configuration()`
+   and `Collection` reached through both `invoke` and `invoke.collection`, reports nothing at all.
+   This is the regression test for both rejected shapes.
+3. **Not run, and owed.** `repo-tasks`' `inv quality.type-check` is the only consumer with a real
+   suite. Running it means installing an unreleased build into that repo's virtualenv, which is not
+   a session working here doing it. What was done instead: its `tests/unit/test_types.py`
+   assertions — `assert_type(ns, Collection)` and the `Callable[[Context], None] = <task>.body`
+   declaration — were mirrored into probe 2 and pass there. That covers the contract but not the
+   real suite, so the version bump should not be consumed there until someone runs it in that repo.
+4. **Not run.** `ingesta`'s gate after its 59 suppressions are removed, which is likewise that
+   repo's session to do. `reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate
+   run after taking 0.2.0 names every suppression that is now stale. That count going to near-zero
+   is the outcome measure for the whole plan.
+5. **Not run.** mypy, per the `UNVERIFIED` tag above.
