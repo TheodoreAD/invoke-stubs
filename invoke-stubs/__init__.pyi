@@ -4,11 +4,11 @@
 # `reportPrivateImportUsage` (pyright) / `no_implicit_reexport` (mypy --strict) against the inline
 # package.
 #
-# Every module named below is now shipped here, plus `util`, which several of them need. `py.typed`
-# still says `partial` because `env`, `completion`, `main` and the vendored packages are not
-# shipped: until they are, the marker is what keeps those resolvable for a consumer that does have
-# invoke installed. See plans/2026-08-30-missing-collection-and-context-stubs.md for why the marker
-# moves last rather than first.
+# Every module named below is shipped here, plus `util`, which several of them need. `py.typed`
+# stays `partial` deliberately: `env`, `completion`, `main` and the vendored packages are not
+# shipped, and the marker is what keeps those resolvable for a consumer that does have invoke
+# installed. See plans/2026-08-30-missing-collection-and-context-stubs.md section 4 for why that is
+# the end state rather than a step towards a complete distribution.
 
 from typing import Any
 

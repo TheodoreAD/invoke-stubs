@@ -9,10 +9,12 @@ through to invoke's inline annotations.
   module's whole public surface — including the attributes a class assigns to `self`, which
   `basedpyright --createstub` does not emit. Measured: `Result.exited` was missing from a generated
   stub that otherwise looked complete.
-- The marker stays `partial` until every remaining module is declared. Emptying it removes the
-  fallback outright, so a consumer that *has* invoke installed loses any name whose module is not
-  shipped — see `plans/2026-08-30-missing-collection-and-context-stubs.md`, which measured that and
-  sets the order.
+- **The marker stays `partial`. That is a decision, not a stage.** Emptying it removes the fallback
+  outright, so a consumer that *has* invoke installed loses any name whose module is not shipped,
+  and it buys nothing: the modules are what make these stubs authoritative, and with them in place
+  a consumer type-checks clean without `allowedUntypedLibraries: ["invoke"]` while `partial` is
+  still set. Measured both ways — see
+  `plans/2026-08-30-missing-collection-and-context-stubs.md` section 4.
 - `__init__.pyi` mirrors the names invoke's own `__init__.py` re-exports, in `import X as X` form.
   When bumping against a new invoke release, diff it against `invoke/__init__.py` in that release.
   Do not run an import sorter over it without this repo's `ruff.toml`: without `combine-as-imports`,
