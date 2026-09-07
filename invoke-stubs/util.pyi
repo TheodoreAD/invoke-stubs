@@ -11,15 +11,23 @@ import threading
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from types import TracebackType
-from typing import IO, Any, NamedTuple
+from typing import IO, Any, NamedTuple, TypeVar
 
 LOG_FORMAT: str
 log: logging.Logger
 debug: Callable[..., None]
 
-class Lexicon(dict[str, Any]):
-    def __getattr__(self, name: str) -> Any: ...
-    def __setattr__(self, name: str, value: Any) -> None: ...
+_VT = TypeVar("_VT")
+
+# A deliberate departure, like `DataProxy.__setitem__` and `Promise.__exit__`: invoke's vendored
+# `Lexicon` subclasses a bare `dict`, so every lookup through it is `Any`. Each attribute holding one
+# is homogeneous at runtime — `Collection.add_task` only ever stores a `Task`, `add_collection` only
+# ever a `Collection`, `ParserContext.args` only ever an `Argument` — so the parameter says what is
+# true rather than what upstream's annotation says, and the value is reached without a cast.
+# `__setattr__` takes `_VT` because the vendored `AttributeDict` assigns the item, not an attribute.
+class Lexicon(dict[str, _VT]):
+    def __getattr__(self, name: str) -> _VT: ...
+    def __setattr__(self, name: str, value: _VT) -> None: ...
     def alias(self, from_: str, to: str) -> None: ...
     def aliases_of(self, name: str) -> list[str]: ...
 

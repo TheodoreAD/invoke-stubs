@@ -85,6 +85,15 @@ _ = Config(project_location=Path("/tmp"))   # bare PathLike resolves as PathLike
 with Context(config=config).cd(Path("/tmp")):
     pass
 
+# `Lexicon` is generic here where invoke's subclasses a bare dict, so these were `Any` and cost the
+# one real consumer 14 casts. `assert_type` rather than a plain call: `Any` satisfies every call.
+sub = Collection(name="sub")
+ns.add_collection(sub)
+assert_type(ns.collections["sub"], Collection)
+assert_type(ns.tasks["type-check"], Task[Any])
+assert_type(ns.collections.sub, Collection)
+assert_type(program.args["help"], Argument)
+
 print(merged, loader, core_args, results, unparsed, responder, failing, chunk, body, error, c)
 '''
 

@@ -7,11 +7,11 @@ from .util import Lexicon
 
 class Collection:
     auto_dash_names: bool
-    collections: Lexicon
+    collections: Lexicon[Collection]
     default: str | None
     loaded_from: str | None
     name: str | None
-    tasks: Lexicon
+    tasks: Lexicon[Task[Any]]
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def __eq__(self, other: object) -> bool: ...
     def __bool__(self) -> bool: ...
