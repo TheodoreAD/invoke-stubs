@@ -316,8 +316,9 @@ The negative test is the point — a check nobody has seen fail is a check nobod
    15 gate steps green and 616 tests passing once those lookups took `cast(Collection, ...)`. What
    this section originally recorded — that its `tests/unit/test_types.py` assertions were mirrored
    into probe 2 and pass there — covered the contract but not the suite, which is exactly the gap
-   that showed up. The full report, and the `Lexicon` question it raises for this repo, is
-   `plans/2026-09-07-consumer-verification-of-0-2-0.md`.
+   that showed up. The `Lexicon` question that raised is settled and shipped in 0.3.0; why it went
+   that way rather than to a plain `dict` is `contributing/stub-decisions.md`. Reported by the
+   now-retired `plans/2026-09-07-consumer-verification-of-0-2-0.md`.
 4. **Not run.** `ingesta`'s gate after its 59 suppressions are removed, which is that repo's session
    to do. `reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate run after taking
    0.2.0 names every suppression that is now stale. That count going to near-zero is the outcome
