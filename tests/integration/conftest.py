@@ -45,7 +45,9 @@ def _build(path: Path, repo_root: Path, *, with_invoke: bool) -> Path:
     if not (path / "bin" / "python").exists():
         created = _run("uv", "venv", "--python", PYTHON, str(path))
         assert created.returncode == 0, created.stderr
-    packages = ["basedpyright", str(repo_root)] + (["invoke"] if with_invoke else [])
+    # mypy alongside basedpyright: the README claims both, and a claim nothing runs is a claim that
+    # rots. Same two environments, so it costs one install rather than a third venv.
+    packages = ["basedpyright", "mypy", str(repo_root)] + (["invoke"] if with_invoke else [])
     python = str(path / "bin" / "python")
     installed = _run("uv", "pip", "install", "--python", python, "--reinstall-package", "invoke-stubs", *packages)
     assert installed.returncode == 0, installed.stderr
@@ -62,6 +64,16 @@ def venv_without_invoke(tmp_path_factory: pytest.TempPathFactory, repo_root: Pat
     return _build(tmp_path_factory.mktemp("without-invoke") / "venv", repo_root, with_invoke=False)
 
 
+def probe_sources(tmp_path: Path, sources: dict[str, str]) -> Path:
+    """Write a throwaway consumer package. Shared so both checkers see byte-identical sources."""
+    package = tmp_path / "probe"
+    package.mkdir(exist_ok=True)
+    (package / "__init__.py").write_text("")
+    for name, source in sources.items():
+        (package / name).write_text(source)
+    return package
+
+
 @pytest.fixture
 def check_consumer(tmp_path: Path):
     """Type-check a throwaway consumer package against one of the virtualenvs.
@@ -75,11 +87,7 @@ def check_consumer(tmp_path: Path):
         venv = basedpyright.parent.parent
         config = CONSUMER_PYRIGHT_CONFIG | {"venvPath": str(venv.parent), "venv": venv.name}
         (tmp_path / "pyrightconfig.json").write_text(json.dumps(config))
-        package = tmp_path / "probe"
-        package.mkdir(exist_ok=True)
-        (package / "__init__.py").write_text("")
-        for name, source in sources.items():
-            (package / name).write_text(source)
+        probe_sources(tmp_path, sources)
         proc = _run(str(basedpyright), "--outputjson", cwd=tmp_path)
         assert proc.stdout.strip(), f"basedpyright produced no output: {proc.stderr}"
         return cast("Diagnostics", json.loads(proc.stdout)["generalDiagnostics"])
