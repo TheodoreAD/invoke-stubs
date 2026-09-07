@@ -3,9 +3,11 @@
 # surface this distribution has to track, and `ParseMachine` is internal machinery no consumer
 # constructs or subclasses — `Parser` and `ParseResult` are the names `invoke/__init__.py` exports.
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
-from ..util import Lexicon
+from invoke.util import Lexicon
+
 from .context import ParserContext
 
 def is_flag(value: str) -> bool: ...

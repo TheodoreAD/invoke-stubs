@@ -1,4 +1,5 @@
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from .argument import Argument
 
@@ -14,7 +15,6 @@ class ParserContext:
         aliases: Iterable[str] = ...,
         args: Iterable[Argument] = ...,
     ) -> None: ...
-    def __repr__(self) -> str: ...
     def add_arg(self, *args: Any, **kwargs: Any) -> None: ...
     @property
     def missing_positional_args(self) -> list[Argument]: ...

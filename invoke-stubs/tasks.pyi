@@ -44,7 +44,8 @@ class Task(Generic[T]):
         optional: Iterable[str] = (),
         default: bool = False,
         auto_shortflags: bool = True,
-        help: dict[str, Any] | None = None,  # noqa: A002 — invoke's own keyword name
+        # invoke's own keyword name; renaming it here would describe an API that does not exist.
+        help: dict[str, Any] | None = None,  # noqa: A002
         pre: list[Task[Any] | Call | str] | str | None = None,
         post: list[Task[Any] | Call | str] | str | None = None,
         autoprint: bool = False,
@@ -72,7 +73,7 @@ def task(
     optional: Iterable[str] = ...,
     default: bool = ...,
     auto_shortflags: bool = ...,
-    help: dict[str, Any] | None = ...,  # noqa: A002 — invoke's own keyword name
+    help: dict[str, Any] | None = ...,
     pre: list[Task[Any] | Call | str] | str | None = ...,
     post: list[Task[Any] | Call | str] | str | None = ...,
     autoprint: bool = ...,

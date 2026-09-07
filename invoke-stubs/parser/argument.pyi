@@ -1,4 +1,5 @@
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 class Argument:
     def __init__(
@@ -7,13 +8,13 @@ class Argument:
         names: Iterable[str] = ...,
         kind: Any = ...,
         default: Any | None = ...,
-        help: str | None = ...,  # noqa: A002 — invoke's own keyword name
+        # invoke's own keyword name; renaming it here would describe an API that does not exist.
+        help: str | None = ...,  # noqa: A002
         positional: bool = ...,
         optional: bool = ...,
         incrementable: bool = ...,
         attr_name: str | None = ...,
     ) -> None: ...
-    def __repr__(self) -> str: ...
     @property
     def name(self) -> str | None: ...
     @property
