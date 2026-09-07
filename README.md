@@ -15,8 +15,8 @@ for a strict type checker:
   `__init__.pyi` uses the `import X as X` form.
 - Every re-exported name resolves **without invoke installed**. That is the configuration these
   stubs exist for — a repo whose `inv` comes from a globally installed tool cannot have invoke in
-  its own virtualenv, because a second `inv` on `PATH` shadows that tool's entry point. Before
-  0.2.0 only `task` worked there; `Collection`, `Context`, `Exit` and the rest were
+  its own virtualenv, because a second `inv` on `PATH` shadows that tool's entry point. Before 0.2.0
+  only `task` worked there; `Collection`, `Context`, `Exit` and the rest were
   `reportAttributeAccessIssue`, because `__init__.pyi` re-exported them from sibling modules the
   package did not ship.
 
