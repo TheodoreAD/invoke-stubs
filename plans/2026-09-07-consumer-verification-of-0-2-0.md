@@ -1,5 +1,5 @@
 ---
-status: idea
+status: landed
 updated: 2026-09-07
 source_repo: github.com-personal/repo-tasks
 source_session: 52905ee0-50ff-4376-bd19-5ab4d9ca0a24.jsonl
@@ -59,34 +59,43 @@ Nothing else moved: no suppression in `repo-tasks` became stale
 `reportImplicitOverride` ignore is still needed for a reason that has nothing to do with the stubs
 (`typing.override` lands in 3.12, that package's floor is 3.11).
 
-## Open questions
+## The decision, 2026-09-07
 
-[NEEDS CLARIFICATION: should `Lexicon` be generic in the stub — `class Lexicon(dict[str, _VT])` with
-`__getattr__(self, name: str) -> _VT`, letting `collection.pyi` declare
-`collections: Lexicon[Collection]` and `tasks: Lexicon[Task[Any]]`? Both are true of invoke at
-runtime: `Collection.add_collection` only ever stores a `Collection` and `add_task` only ever a
-`Task`. It would delete every cast this bump cost its one real consumer, and `Lexicon[Collection]`
-is subscriptable at runtime anyway, since `dict.__class_getitem__` is inherited — so a stub-only
-generic parameter costs nothing that a consumer could trip over.
+[DECISION: `Lexicon` is generic in the stub — `class Lexicon(dict[str, _VT])`, `__getattr__` and
+`__setattr__` in `_VT` — and every site holding one names its value type: `Collection.collections`
+as `Lexicon[Collection]`, `Collection.tasks` as `Lexicon[Task[Any]]`, `ParserContext.args`/`.flags`
+and `Program.args` as `Lexicon[Argument]`, `Parser.contexts` and `ParseMachine.contexts` as
+`Lexicon[ParserContext]`. Shipped in 0.3.0.
 
-Against: it is a **third** deliberate departure from what invoke's source says, on top of the two
-`__setitem__`/`__exit__` widenings, and this repo's generator would keep reverting it. The
-alternative is that consumers cast, which is what `repo-tasks` now does in 14 places — cheap, but it
-is the kind of cheap that gets copied into every consumer rather than fixed once.]
+It beat declaring the two `Collection` attributes as plain `dict[str, Collection]` /
+`dict[str, Task[Any]]`, which is the smaller change and gets the same win at the two call sites that
+matter. Two things decided it. Attribute access — `ns.collections.build` — and `.aliases_of()` are
+real members of the runtime object, and a `dict` declaration makes valid code fail, which is the
+same argument that widened `DataProxy.__setitem__` rather than transcribing it. And a `dict` would
+have to be decided again for `ParserContext.args`, `Program.args` and `Parser.contexts`, where the
+value type is equally knowable; the generic parameter answers all six at once.
 
-[NEEDS CLARIFICATION: is `Lexicon` the right declaration for those two attributes at all, or should
-they be `dict[str, Collection]` / `dict[str, Task[Any]]`? That is a smaller change than making
-`Lexicon` generic and gets the same win at the two call sites that matter, at the cost of losing
-`.aliases_of()`/attribute access on those specific attributes — which no consumer on this machine
-uses.]
+Against, and accepted: it is a fourth deliberate departure from invoke's source, and a regeneration
+reverts it. That is what the in-place comment and `AGENTS.md`'s list of departures are for. The
+homogeneity claim is not an assumption — `add_task` only ever stores a `Task`, `add_collection` only
+ever a `Collection`, `ParserContext.args[main] = arg` only ever an `Argument`, checked against
+invoke 3.0.3's source rather than inferred from its annotations.]
 
-## Recommended direction
+[PITFALL: **a probe that calls the value proves nothing about an `Any`.** `Any` satisfies every call
+and every annotated assignment, so a usage case exercising `ns.collections["x"].configuration()`
+would have passed against the old bare-`dict` declaration exactly as it does against the fix. The
+probe cases use `assert_type`, and were confirmed by putting `Lexicon[Any]` back and watching three
+diagnostics return — two `assert_type` mismatches and the `reportAny` that cost the consumer its
+casts.]
 
-Close item 3 of `2026-08-30-missing-collection-and-context-stubs.md`'s Verification section: the
-real consumer gate has now been run against 0.2.0 and is green, so the version is safe to consume.
-Item 4 (`ingesta`'s 59 suppressions) is still that repo's session to do, and item 5 (mypy) is
-untouched.
+## What is left
 
-Then decide the `Lexicon` question above, ideally before another consumer takes 0.2.0 and writes its
-own casts. Either answer is defensible; what is not is leaving it undecided and discovering the
-casts have spread.
+[DEFERRED: `repo-tasks`' 14 `cast(Collection, ns.collections["<name>"])` are unnecessary once it
+takes 0.3.0, and nothing there will say so: `reportUnnecessaryTypeIgnoreComment` is an error in that
+repo and catches a stale `# pyright: ignore`, but a redundant `cast` is not a suppression and no
+rule flags it. So this is a deliberate pass in that repo rather than something its gate announces —
+filed there as its own plan.]
+
+Item 4 of `2026-08-30-missing-collection-and-context-stubs.md`'s Verification (`ingesta`'s 59
+suppressions) is still that repo's session to do. Item 5 (mypy) is closed: run 2026-09-07, clean in
+both environments, and a test in the integration tier since.

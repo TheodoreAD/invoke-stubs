@@ -188,8 +188,12 @@ records why that is now the end state rather than a phase-2 backlog.
 session to make, and `reportUnnecessaryTypeIgnoreComment` will name each one on its next gate run
 after it takes 0.2.0.]
 
-[UNVERIFIED: the whole design is measured on basedpyright 1.39.10 only. The README claims mypy
-support, and mypy's partial-stub and shadowing behaviour was not exercised in any of these runs.]
+The design was measured on basedpyright 1.39.10 only until 2026-09-07, when mypy 2.3.1 `--strict`
+was run over the same probe sources in both environments and reported no issues in either — so mypy
+honours the `partial` marker and the module shadowing the same way, and section 4's decision does
+not rest on one checker's reading of PEP 561. It is a test now
+(`tests/integration/test_mypy_integration.py`) rather than a claim in the README, because the next
+mypy release is what the measurement cannot speak for.
 
 ### 5. What reviewing the shipped stubs found
 
@@ -318,4 +322,12 @@ The negative test is the point — a check nobody has seen fail is a check nobod
    to do. `reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate run after taking
    0.2.0 names every suppression that is now stale. That count going to near-zero is the outcome
    measure for the whole plan.
-5. **Not run.** mypy, per the `UNVERIFIED` tag above.
+5. **Run 2026-09-07, and passing.** mypy 2.3.1 `--strict`, both environments, no issues — and a test
+   in the integration tier rather than a one-off, per the paragraph replacing the `UNVERIFIED` tag
+   in section 4.
+
+2e. **Passing, and it found 19 missing attributes.** 2d globbed the stub root, so `parser/` was
+outside every run above; recursive, it reported `ParserContext` missing six attributes, `Argument`
+nine, and the three parser classes four more. Declared in 0.3.0. The check was right and its reach
+was not, which is a different failure from the one the pitfall above records and reads identically
+from the outside: both are a green check that proves less than it appears to.
