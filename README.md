@@ -1,7 +1,7 @@
 # invoke-stubs
 
 Partial [PEP 561](https://peps.python.org/pep-0561/) type stubs for
-[invoke](https://github.com/pyinvoke/invoke). Three things invoke's own inline annotations get wrong
+[invoke](https://github.com/pyinvoke/invoke). Four things invoke's own inline annotations get wrong
 for a strict type checker:
 
 - `@task` keeps the decorated function's signature. invoke declares
@@ -19,10 +19,15 @@ for a strict type checker:
   only `task` worked there; `Collection`, `Context`, `Exit` and the rest were
   `reportAttributeAccessIssue`, because `__init__.pyi` re-exported them from sibling modules the
   package did not ship.
+- A `Collection`'s tasks and subcollections come back typed. invoke's `Lexicon` subclasses a bare
+  `dict`, so `ns.collections["build"]` is `Any` — one consumer took 14 casts for that on 0.2.0.
+  `Lexicon` is generic in its value type here, and `Collection.collections` and `.tasks` say what
+  they hold.
 
 `py.typed` says `partial`. Every module `__init__.pyi` re-exports from is declared here, plus
 `util`; `env`, `completion`, `main` and invoke's vendored packages still resolve to invoke's inline
-types. Works with pyright/basedpyright; mypy is untested.
+types. Both basedpyright and mypy `--strict` are exercised by the test suite, with invoke installed
+and without it.
 
 One diagnostic is not fixable from this side: with invoke absent, `import invoke` is
 `reportMissingModuleSource` — "a stub was found but the source module was not", which is the

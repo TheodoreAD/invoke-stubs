@@ -20,7 +20,7 @@ with one that cannot import `repo_tasks`; that one can.
 ```shell
 inv quality.precommit   # the gate — runs the unit tier, formatters and the type checker
 inv test.unit           # tests/unit — pure AST over the stubs, no venv, no network, ~0.1s
-inv test.integration    # tests/integration — builds two throwaway venvs, ~3s
+inv test.integration    # tests/integration — builds two throwaway venvs, ~5s
 inv test.all            # both tiers
 ```
 
@@ -32,17 +32,27 @@ the module it names, every module it names is shipped, every re-export uses the 
 
 The integration tier is the only one that can answer what this distribution exists for — a consumer
 with **invoke absent** type-checking cleanly — because that needs invoke installed in one virtualenv
-and absent from another. It also checks the stubs as source, and that no class is missing an
-attribute invoke assigns to `self`.
+and absent from another. It also checks the stubs as source, that no class is missing an attribute
+invoke assigns to `self`, and that mypy `--strict` agrees with basedpyright in both environments.
 
 - A new `.pyi` shadows invoke's inline version of that module entirely, so it must declare that
   module's whole public surface — including the attributes a class assigns to `self`, which
   `basedpyright --createstub` does not emit. Measured: `Result.exited` was missing from a generated
   stub that otherwise looked complete. `tests/integration/test_attributes_integration.py` exists for
-  exactly this.
+  exactly this, and globs `**/*.pyi` — it was flat until 2026-09-07, and the `parser/` subpackage it
+  could not see was missing 19 attributes across five classes.
 - **Add a case to the `USAGE_PROBE` in `tests/integration/test_consumer_integration.py` for anything
   the other tests cannot see.** They cover names and attributes; a wrong _signature_ is only found
-  by calling it. Every case at the bottom of that probe was a real defect once.
+  by calling it. Every case at the bottom of that probe was a real defect once. Use `assert_type`
+  where the defect would be an `Any` — a plain call proves nothing, since `Any` satisfies every
+  call.
+- **Four declarations deliberately depart from what invoke's source says**, each commented in place
+  so a regeneration does not quietly revert it: `DataProxy.__setitem__` takes `Any` rather than
+  `str`; `Promise.__exit__` accepts `BaseException | None` so it satisfies `AbstractContextManager`;
+  `PathLike` is parameterized to `PathLike[str]` in `config.pyi` and `context.pyi`; and `Lexicon` is
+  generic in its value type, where invoke's subclasses a bare `dict`. The rule is still to mirror
+  upstream — these exist because a stub that rejects valid code, or hands the consumer `Any`, is
+  worse than one that diverges. The `Lexicon` one deleted 14 casts from the one real consumer.
 - **`inv configs.diff` will always report `dependency-groups.dev is missing: invoke-stubs`, and that
   is correct.** The canonical manifest lists this package because every _other_ consumer needs it;
   this repo is it, and taking the published build as a dev dependency would shadow the working tree
