@@ -1,6 +1,8 @@
 from collections.abc import Iterable
 from typing import Any
 
+from invoke.util import Lexicon
+
 from .argument import Argument
 
 def translate_underscores(name: str) -> str: ...
@@ -9,6 +11,14 @@ def sort_candidate(arg: Argument) -> str: ...
 def flag_key(arg: Argument) -> list[int | str]: ...
 
 class ParserContext:
+    aliases: Iterable[str]
+    args: Lexicon[Argument]
+    flags: Lexicon[Argument]
+    # A plain dict upstream, and commented there as deliberately not a Lexicon: it maps an inverse
+    # flag's name to the name it inverts, so its values are names rather than arguments.
+    inverse_flags: dict[str, str]
+    name: str | None
+    positional_args: list[Argument]
     def __init__(
         self,
         name: str | None = ...,

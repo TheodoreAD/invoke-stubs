@@ -2,6 +2,18 @@ from collections.abc import Iterable
 from typing import Any
 
 class Argument:
+    attr_name: str | None
+    default: Any | None
+    help: str | None
+    incrementable: bool
+    kind: Any
+    names: tuple[str, ...]
+    optional: bool
+    positional: bool
+    # Not a constructor parameter: it starts as `None`, `[]` for a list-kind argument, or the
+    # default for an incrementable one, and the parser then assigns whatever came off the command
+    # line.
+    raw_value: Any
     def __init__(
         self,
         name: str | None = ...,

@@ -80,7 +80,13 @@ def assigned_to_self(module: ast.Module) -> dict[str, set[str]]:
 
 
 def stubbed_modules() -> list[str]:
-    return sorted(p.stem for p in STUBS.glob("*.pyi") if p.stem != "__init__")
+    """Every shipped module, `parser/` included — a relative path so it names both sides.
+
+    `STUBS / f"{module}.pyi"` and `invoke/f"{module}.py"` both resolve from it, so the subpackage
+    needs no separate branch. It was a flat glob until 2026-09-07, which is why `ParserContext` sat
+    missing six attributes invoke assigns.
+    """
+    return sorted(str(p.relative_to(STUBS).with_suffix("")) for p in STUBS.rglob("*.pyi") if p.stem != "__init__")
 
 
 @pytest.mark.parametrize("module", stubbed_modules())

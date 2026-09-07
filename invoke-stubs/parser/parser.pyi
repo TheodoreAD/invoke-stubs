@@ -8,16 +8,23 @@ from typing import Any
 
 from invoke.util import Lexicon
 
+from .argument import Argument
 from .context import ParserContext
 
 def is_flag(value: str) -> bool: ...
 def is_long_flag(value: str) -> bool: ...
 
 class ParseResult(list[ParserContext]):
+    # The string after a `--` in the parsed argv, assigned by `Parser.parse_argv` rather than by
+    # the constructor, which starts it empty.
+    remainder: str
     unparsed: list[str]
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
 
 class Parser:
+    contexts: Lexicon[ParserContext]
+    ignore_unknown: bool
+    initial: ParserContext | None
     def __init__(
         self,
         contexts: Iterable[ParserContext] = ...,
@@ -28,6 +35,13 @@ class Parser:
 
 class ParseMachine:
     initial_state: str
+    context: ParserContext
+    contexts: Lexicon[ParserContext]
+    flag: Argument | None
+    flag_got_value: bool
+    ignore_unknown: bool
+    # Deep-copied from the constructor's `initial`, which is not optional here as it is on `Parser`.
+    initial: ParserContext
     result: ParseResult
     def __init__(self, initial: ParserContext, contexts: Lexicon[ParserContext], ignore_unknown: bool) -> None: ...
     def changing_state(self, from_: str, to: str) -> None: ...
