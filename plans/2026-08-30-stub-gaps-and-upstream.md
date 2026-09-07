@@ -10,8 +10,8 @@ Filed from a `repo-tasks` session, 2026-08-30. Both items were carried in that r
 fixtures; that one was already resolved in code and the plan is retired there. These two are about
 this repo, so they come here.
 
-Neither blocks anything. Both would **delete** code if they land, which is the unusual property worth
-keeping in view: this repo exists to be deleted eventually.
+Neither blocks anything. Both would **delete** code if they land, which is the unusual property
+worth keeping in view: this repo exists to be deleted eventually.
 
 ## Context
 
@@ -46,9 +46,11 @@ PyPI's release index and the GitHub API, that is no longer true:
   near-silence (2.2.0 in 2023-07, then 2.1.4/2.2.1 in 2025-10). Still no `Typing ::` classifier and
   still no `py.typed`.
 - **v3 added typing to `tasks.py`, and got it wrong.** `Task` is now `Generic[T]` with
-  `T = TypeVar("T", bound=Callable)` — but `task()` is still `(*args: Any, **kwargs: Any) ->
-  Callable`, so nothing ever parameterizes `Task[T]`, and `Task.__call__` returns `T` instead of the
-  return type. Both are exactly what this distribution's `tasks.pyi` already fixes.
+  `T = TypeVar("T", bound=Callable)` — but `task()` is still
+  `(*args: Any, **kwargs: Any) ->
+  Callable`, so nothing ever parameterizes `Task[T]`, and
+  `Task.__call__` returns `T` instead of the return type. Both are exactly what this distribution's
+  `tasks.pyi` already fixes.
 - **Three users filed that as bugs in 2026** — pyinvoke #1061 (04-07), #1067 (04-26), #1073 (06-08)
   — with one comment between them and no visible maintainer engagement.
 - **The re-export half already has an open PR**: #981, "Explicitly re-export names from top-level
@@ -63,10 +65,10 @@ has sat for over two years.
 ## Open questions
 
 - [DEFERRED: offer the `@task` signature upstream to pyinvoke — the stub's `ParamSpec` overloads for
-  `task()` plus an `__all__` (or `import X as X` re-exports) in `invoke/__init__.py`. invoke's `main`
-  was unchanged as of 2026-08-25. If a released invoke ever carries it, **this whole distribution is
-  deleted outright**, and `repo-tasks`' `repo-tasks-quality` entry with it — which is the whole
-  reason it is worth offering rather than maintaining a stub indefinitely.]
+  `task()` plus an `__all__` (or `import X as X` re-exports) in `invoke/__init__.py`. invoke's
+  `main` was unchanged as of 2026-08-25. If a released invoke ever carries it, **this whole
+  distribution is deleted outright**, and `repo-tasks`' `repo-tasks-quality` entry with it — which
+  is the whole reason it is worth offering rather than maintaining a stub indefinitely.]
 
 [NEEDS CLARIFICATION: issue, PR, or neither? Deliberately left open 2026-09-07 — the evidence was
 gathered and the decision deferred, rather than the question being unanswerable.
@@ -85,10 +87,10 @@ Whichever is chosen, nothing is posted to a third-party tracker without the text
 first.]
 
 - [DEFERRED: a `task(klass=..., **kwargs)` overload. invoke's own extension point for task metadata
-  is a `Task` subclass plus custom keywords, and the stub types `klass` but has no overload accepting
-  the extra keywords that subclass exists to receive — so `@task(klass=Custom, thing=...)` matches
-  nothing, `@task` degrades to an untyped decorator, and the decorated function's `.body` becomes
-  `Any` with `reportUntypedFunctionDecorator` firing. Measured 2026-08-26 while designing
+  is a `Task` subclass plus custom keywords, and the stub types `klass` but has no overload
+  accepting the extra keywords that subclass exists to receive — so `@task(klass=Custom, thing=...)`
+  matches nothing, `@task` degrades to an untyped decorator, and the decorated function's `.body`
+  becomes `Any` with `reportUntypedFunctionDecorator` firing. Measured 2026-08-26 while designing
   `repo-tasks`' `requirements.py`, which routed around it with a separately-typed decorator instead.
   Re-confirmed verbatim 2026-09-07 against invoke 3.0.3 and basedpyright 1.39.10: "No overloads for
   `task` match the provided arguments", then `reportUntypedFunctionDecorator`, then `.body` as
@@ -109,8 +111,8 @@ v3's own `Task[T]` is unusable because `task()` does not parameterize it, three 
 that, and this repo has a tested implementation of the fix. Whether to spend the effort is a
 judgement about appetite for owning a contribution, not about whether the gap is real.
 
-The original text, for the record: *"Leave both. The upstream one only becomes worth doing if the
+The original text, for the record: _"Leave both. The upstream one only becomes worth doing if the
 stub starts needing maintenance; as of the 08-26 assessment it did not. Revisit if this distribution
 grows past the two narrowings it ships today, or if invoke releases anything touching `tasks.py`'s
-signatures. The trigger is deliberately 'a third gap appears' rather than a date — two gaps is a stub
-doing its job, three is a stub becoming a project."*
+signatures. The trigger is deliberately 'a third gap appears' rather than a date — two gaps is a
+stub doing its job, three is a stub becoming a project."_

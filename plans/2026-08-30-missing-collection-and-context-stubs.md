@@ -47,8 +47,8 @@ The consumer's suppression burden has grown, which is the argument for acting ra
 documenting. The original note recorded four `# pyright: ignore` comments across two files; the same
 five task modules now carry **59** — 11, 7, 7, 5 and 29 — of which exactly one is about `repo_tasks`
 rather than invoke. `reportUnnecessaryTypeIgnoreComment` is an error in that config, so whenever
-this is fixed the gate flags every stale suppression on its next run: the cleanup is
-self-announcing rather than something anyone has to remember.
+this is fixed the gate flags every stale suppression on its next run: the cleanup is self-announcing
+rather than something anyone has to remember.
 
 ## Design
 
@@ -87,9 +87,9 @@ diagnostic where invoke is absent and regresses nothing where it is present.
 
 [DECISION: This is why "which members are worth declaring" stopped being a question. It was posed as
 a free choice per class and is not one: shipping a module means declaring all of it. The choice that
-remains is *which modules*, and it is a transitive closure rather than a list — `collection` pulls
-in `parser` (`to_contexts` returns `ParserContext`) and `tasks`; `context` pulls in `runners`
-(`run` returns `Result`), `config` and `watchers`.]
+remains is _which modules_, and it is a transitive closure rather than a list — `collection` pulls
+in `parser` (`to_contexts` returns `ParserContext`) and `tasks`; `context` pulls in `runners` (`run`
+returns `Result`), `config` and `watchers`.]
 
 ### 3. Ship all twelve modules — and, as chosen at the time, go non-partial
 
@@ -108,7 +108,7 @@ it.
 
 [PITFALL: **Non-partial removes the fallback entirely, so the marker flip is the breaking moment and
 cannot precede the modules.** With `py.typed` emptied but `config.pyi` and `context.pyi` not yet
-written, a consumer that *has* invoke installed loses `Config` and `Context` — names that resolve
+written, a consumer that _has_ invoke installed loses `Config` and `Context` — names that resolve
 fine under `partial`. Confirmed 2026-09-06: two errors and four warnings in the invoke-installed
 probe, on imports that were clean a moment earlier. Under `partial` each new module is independently
 safe, which is what makes the phasing below work; there is no such safety once the marker is gone.]
@@ -136,9 +136,9 @@ silently drops every attribute a class assigns to `self`.** A generated `runners
 complete and had no `Result.exited`, `.stdout` or `.stderr` — the attributes every consumer of a
 `c.run(...)` result actually reads. It surfaced only because the probe read `result.exited`; a stub
 reviewed by eye would have passed. 47 attributes across 13 classes were missing, recovered by
-walking invoke's own AST for `self.<name> =` and typing each from the matching `__init__`
-parameter. Any future regeneration needs that pass, and `--createstub` run in a virtualenv that
-also holds *this* package stubs these files rather than invoke's.]
+walking invoke's own AST for `self.<name> =` and typing each from the matching `__init__` parameter.
+Any future regeneration needs that pass, and `--createstub` run in a virtualenv that also holds
+_this_ package stubs these files rather than invoke's.]
 
 ### 4. Phase 2 should not happen — its premise did not survive being tested
 
@@ -152,17 +152,17 @@ exercising the whole surface — `Collection`, `Config`, `Context`, `MockContext
 errors, 0 warnings. The setting is redundant now, and flipping the marker is not what made it so.
 
 **And the flip has a cost with nothing on the other side of it.** In the same clean environment,
-`from invoke.env import Environment` type-checks under `partial` and becomes
-`reportMissingImports` under a non-partial marker, because `env` is not shipped and there is no
-longer anything to fall back to. That is the whole observable difference between the two markers
-once phase 1 exists: the same consumer code, one hard error worse.
+`from invoke.env import Environment` type-checks under `partial` and becomes `reportMissingImports`
+under a non-partial marker, because `env` is not shipped and there is no longer anything to fall
+back to. That is the whole observable difference between the two markers once phase 1 exists: the
+same consumer code, one hard error worse.
 
 Closing that gap means declaring `env`, `completion`, `main`, `__main__`, `_version` and invoke's
 vendored packages — including its vendored yaml, by far the largest thing in the distribution — to
 buy back a diagnostic that only appears because the marker was flipped.
 
 [DECISION: Stay `partial`, permanently. The two-phase plan was written when the marker looked like
-what made the stubs authoritative; the measurement says the *modules* do that and the marker only
+what made the stubs authoritative; the measurement says the _modules_ do that and the marker only
 removes a fallback that is currently working. Phase 2 is therefore not deferred pending effort — it
 is withdrawn, and `py.typed` keeps saying `partial` as a positive choice rather than a stepping
 stone.]
@@ -170,9 +170,10 @@ stone.]
 [PITFALL: **A site-packages directory that has been hand-edited across several experiments stops
 being evidence, and says so in no way at all.** The first non-partial run in this session reported 6
 errors and 27 warnings, including a hit on the `repo-tasks` contract assertion, and it was entirely
-an artifact of a probe venv whose stub files had been swapped by hand a dozen times — `uv pip
-install --reinstall-package` did not clear it, and a diff of the one file suspicion fell on came
-back identical. A fresh virtualenv, same package, same marker: 0 errors. Any result that would
+an artifact of a probe venv whose stub files had been swapped by hand a dozen times —
+`uv pip
+install --reinstall-package` did not clear it, and a diff of the one file suspicion fell on
+came back identical. A fresh virtualenv, same package, same marker: 0 errors. Any result that would
 change a decision gets re-run in a venv built for that run.]
 
 [DEFERRED: dropping `allowedUntypedLibraries: ["invoke"]` from the family's `pyrightconfig.json`.
@@ -199,7 +200,7 @@ three mechanical checks now in Verification below.
 [PITFALL: **A probe written from what consumers use tests the names you thought of.** The worst of
 the four was `from invoke import Failure`, broken outright: invoke's `__init__.py` re-exports
 `Failure` from `.runners` although it is defined in `.exceptions`, and the generated `runners.pyi`
-did not carry it. Phase 1 therefore made that name *worse* — it used to resolve where invoke was
+did not carry it. Phase 1 therefore made that name _worse_ — it used to resolve where invoke was
 installed, by falling back to invoke's real `runners`, and after phase 1 it failed in both
 configurations. The check that catches this class of thing costs nothing and is now step 2: import
 every name `__init__.pyi` re-exports, generated from that file rather than hand-listed.]
@@ -212,8 +213,8 @@ The other three, each caught by reading and then confirmed against a consumer:
 - **Bare `PathLike` resolves as `PathLike[Unknown]`**, so `c.cd(Path(...))` produced
   `reportUnknownMemberType` in the consumer — a warning, and therefore a gate failure under
   `failOnWarnings`. Parameterized to `PathLike[str]` in `config.pyi` and `context.pyi`.
-- **`DataProxy.__setitem__` rejected `config["timeout"] = 30`**, faithfully, because invoke annotates
-  `value: str` while the runtime takes anything.
+- **`DataProxy.__setitem__` rejected `config["timeout"] = 30`**, faithfully, because invoke
+  annotates `value: str` while the runtime takes anything.
 
 [DECISION: That last one is widened to `Any` rather than transcribed. Mirroring upstream is the
 default and the rest of the distribution does it, but this package exists precisely because invoke's
@@ -260,9 +261,10 @@ repo, since this repo has no suite of its own.
 1. **Passing.** Invoke absent, stubs installed: a module importing `Collection`, `Context`, `Exit`
    and `task` and calling `Collection.from_module`, `add_task`, `c.run` and `result.exited` reports
    **only** `reportMissingModuleSource`. Baseline was 4 errors + 9 warnings.
-2. **Passing.** Invoke installed, stubs installed: the same module, plus `Collection.configuration()`
-   and `Collection` reached through both `invoke` and `invoke.collection`, reports nothing at all.
-   This is the regression test for both rejected shapes.
+2. **Passing.** Invoke installed, stubs installed: the same module, plus
+   `Collection.configuration()` and `Collection` reached through both `invoke` and
+   `invoke.collection`, reports nothing at all. This is the regression test for both rejected
+   shapes.
 
 The three added after section 5 now live in `checks/verify.py` rather than in a scratchpad, run as
 `python3 checks/verify.py`, and are each mechanical rather than written from imagination:
@@ -290,15 +292,14 @@ broken — it tested declaration by substring, so `Result.exited` matched the id
 by putting two known defects back into `runners.pyi` and watching which checks fired: three did, and
 the one written specifically for that defect did not. It parses both sides now, and follows base
 classes so `warned_about_pty_fallback`, declared once on `Runner`, is not reported against `Local`.
-The negative test is the point — a check nobody has seen fail is a check nobody has tested.]
-3. **Not run, and owed.** `repo-tasks`' `inv quality.type-check` is the only consumer with a real
-   suite. Running it means installing an unreleased build into that repo's virtualenv, which is not
-   a session working here doing it. What was done instead: its `tests/unit/test_types.py`
-   assertions — `assert_type(ns, Collection)` and the `Callable[[Context], None] = <task>.body`
-   declaration — were mirrored into probe 2 and pass there. That covers the contract but not the
-   real suite, so the version bump should not be consumed there until someone runs it in that repo.
-4. **Not run.** `ingesta`'s gate after its 59 suppressions are removed, which is likewise that
-   repo's session to do. `reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate
-   run after taking 0.2.0 names every suppression that is now stale. That count going to near-zero
-   is the outcome measure for the whole plan.
-5. **Not run.** mypy, per the `UNVERIFIED` tag above.
+The negative test is the point — a check nobody has seen fail is a check nobody has tested.] 3.
+**Not run, and owed.** `repo-tasks`' `inv quality.type-check` is the only consumer with a real
+suite. Running it means installing an unreleased build into that repo's virtualenv, which is not a
+session working here doing it. What was done instead: its `tests/unit/test_types.py` assertions —
+`assert_type(ns, Collection)` and the `Callable[[Context], None] = <task>.body` declaration — were
+mirrored into probe 2 and pass there. That covers the contract but not the real suite, so the
+version bump should not be consumed there until someone runs it in that repo. 4. **Not run.**
+`ingesta`'s gate after its 59 suppressions are removed, which is likewise that repo's session to do.
+`reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate run after taking 0.2.0
+names every suppression that is now stale. That count going to near-zero is the outcome measure for
+the whole plan. 5. **Not run.** mypy, per the `UNVERIFIED` tag above.
