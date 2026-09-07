@@ -1,13 +1,75 @@
-# Added when the stub modules grew past what was readable unformatted. There is no quality gate in
-# this repo — no runtime code and no suite of its own — so this file exists to make the formatting
-# reproducible rather than to be enforced: `uvx ruff format .` and `uvx ruff check --select I --fix .`
-# both read it.
-#
-# `line-length` matches the rest of the personal repo family.
+# No target-version: ruff reads the floor from the consumer's own `requires-python`, so one
+# byte-identical file serves a 3.11 library and a 3.14 application without either declaring its
+# tier twice. Measured 2026-08-29 on ruff 0.16.3 — PEP 695 `def f[T](x)` is a syntax error under
+# `>=3.11` and clean under `>=3.12`, same config. A project with no `requires-python` at all is the
+# one case that changes: the linter then targets no version (newest syntax passes) while the
+# formatter falls back to 3.10, so declare the field rather than re-adding a pin here.
 line-length = 120
 
+[lint]
+# ruff 0.16 (2026-07) changed its own default from the narrow E4/E7/E9/F set (59 rules) to a much
+# broader 413-rule default — extend-select would pile these on top of that new default and land
+# near-ALL (~966 rules, including bandit/pylint/async-safety noise never intended here). Pin an
+# explicit select instead: the old default (E4, E7, E9, F) plus this repo's curated additions.
+select = [
+  # old ruff default (pycodestyle subset + pyflakes)
+  "E4",
+  "E7",
+  "E9",
+  "F",
+  "E501", # line too long — formatter doesn't wrap comments/docstrings/strings
+  "I", # isort — import sorting
+  "UP", # pyupgrade — modern syntax for the target version
+  "B", # flake8-bugbear — common bug patterns
+  "C4", # flake8-comprehensions
+  "SIM", # flake8-simplify
+  "PTH", # flake8-use-pathlib
+  "RET", # flake8-return
+  "TID", # flake8-tidy-imports
+  # ruff's own zero-config default already includes RUF — an explicit `select` doesn't inherit
+  # it, so this needs listing explicitly or it's silently missing.
+  "RUF", # ruff-specific rules (mutable class defaults, noqa hygiene, f-string pitfalls, ...)
+  "C90", # mccabe complexity — default threshold 10; noqa individual @task handlers that
+  # genuinely need it rather than refactoring every one (see `rg "noqa: C901"`)
+  "PERF", # perflint — real inefficiencies, low false-positive rate
+  "A", # flake8-builtins — shadowed builtins; noqa a deliberate invoke CLI name if changing it
+  # would break the CLI (e.g. a task literally named `dir`/`all`/`list`)
+  "DTZ", # flake8-datetimez — naive datetime.now()/utcnow(), a real timezone-bug class
+  "PL", # pylint subset — PLR (refactor-suggestion codes: too-many-args/branches/statements,
+  # magic-value-comparison) dropped below; every real-world config checked during research (Home
+  # Assistant, Litestar) carves it out the same way
+  "TRY", # tryceratops — exception-handling anti-patterns; TRY003 dropped below
+  "PT", # flake8-pytest-style — fixture/parametrize/raises misuse; the family that fits a repo whose
+  # test suite is this fixture-dense. Some of its rules are contested upstream (astral-sh/ruff#8796)
+  # — ignore individual codes here on real hits, never the family
+  "FURB", # refurb — modernization past UP's syntax-only scope, low false-positive rate
+  "PGH", # blanket-suppression hygiene (a bare `# noqa`, a `# type: ignore` with no rule) — the ruff
+  # half of what pyright's reportIgnoreCommentWithoutRule does for its own comments
+]
+ignore = [
+  "PLR", # see PL comment above — refactor-suggestion noise, not bug-catching
+  "TRY003", # "raise vanilla exception with a long message" — deliberately minimal exception
+  # hierarchies across this family (skills/python-conventions/references/rationale.md §3); Home
+  # Assistant's own config drops this same code for being too opinionated for exactly this reason
+]
+
+[lint.flake8-tidy-imports.banned-api]
+# The guard that pays for `extraPaths: ["."]` in pyrightconfig.json. That setting exists so a
+# packaged `tests/` can import a shared helper as `tests.support`, and it has one side effect: it
+# also makes `from src.<pkg> import ...` resolve clean, which is a *second* import route to the same
+# code. `import src.pkg.mod` and `import pkg.mod` produce different module objects with separate
+# state at runtime, and `src` resolves as a PEP 420 namespace package, so no `src/__init__.py` is
+# needed for the hazard to exist. The type checker stopped objecting, so a linter does instead.
+#
+# Deliberately generic: this file ships byte-identical to every consumer, and a message naming one
+# package would be wrong in all the others. In a flat-layout consumer with no `src/` directory at
+# all the rule is simply inert — never triggered rather than wrong. `TID` is already in `select`
+# above, so this adds no rule family and no dependency.
+"src" = { msg = "import the installed package, not the src/ path to it — they are two different modules at runtime" }
+
 [lint.isort]
-# Without this, the sorter rewrites `__init__.pyi`'s single re-export block into one `from X import`
-# statement per name — the `import X as X` form PEP 484 requires for a public re-export looks like a
-# duplicate import to it. Confirmed by it doing exactly that, 2026-09-06.
-combine-as-imports = true
+# No known-first-party: ruff auto-detects first-party imports from the project's own layout
+# (src/<pkg> or a flat top-level package) without needing it declared — confirmed empirically
+# against both a src-layout repo and a flat-layout one, `ruff check --select I` passes clean
+# either way. One fewer per-repo-varying field in an otherwise byte-identical shared file.
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]

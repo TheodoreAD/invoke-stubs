@@ -11,6 +11,41 @@ classifiers = ["Typing :: Stubs Only"]
 [project.urls]
 Homepage = "https://github.com/TheodoreAD/invoke-stubs"
 
+[dependency-groups]
+# repo-tasks' canonical dependency-groups.quality, put in place by `repo-tasks configs.ensure-deps`
+# rather than hand-listed. repo-tasks and invoke are deliberately absent — they are the global
+# `uv tool install` daily driver — and here invoke's absence is load-bearing rather than
+# conventional: it is what the integration tier builds throwaway virtualenvs to supply, and a
+# second `inv` on PATH would shadow the tool that runs these tasks.
+# `invoke-stubs` itself is in the canonical manifest and `configs.ensure-deps` splices it in here
+# too, which is circular: this repo *is* that package, and taking the published build as a dev
+# dependency would shadow the working tree under test with whatever `main` last released. Removed
+# by hand; ensure-deps is additive and will re-add it on the next run.
+#
+# repo-tasks is present, unlike in every other consumer, and that is deliberate. It brings invoke
+# with it, which the family normally avoids because a second `inv` on PATH shadows the global tool
+# with one that cannot import `repo_tasks` — here it can, because repo-tasks is right there. What
+# that buys: `tasks.py` type-checks without suppressions, and the gate runs from this repo's own
+# venv rather than depending on a tool installed outside it. It does *not* reintroduce the cycle:
+# repo-tasks lists `invoke-stubs` in a dependency-group, and PEP 735 groups are never inherited
+# through a regular dependency.
+dev = [
+  "repo-tasks @ git+https://github.com/TheodoreAD/repo-tasks",
+  "basedpyright>=1.39.10",
+  "pytest",
+  "pytest-cov",
+  "ruff",
+  "shellcheck-py",
+  "shfmt-py",
+  "dprint-py",
+  "actionlint-py",
+  "zizmor",
+  "hadolint-py!=2.15.1.2",
+  "act-bin",
+  "pytest-socket",
+  "pytest-timeout",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
