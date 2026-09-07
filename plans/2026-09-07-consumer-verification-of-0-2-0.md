@@ -99,3 +99,21 @@ filed there as its own plan.]
 Item 4 of `2026-08-30-missing-collection-and-context-stubs.md`'s Verification (`ingesta`'s 59
 suppressions) is still that repo's session to do. Item 5 (mypy) is closed: run 2026-09-07, clean in
 both environments, and a test in the integration tier since.
+
+## Migrated to
+
+- `contributing/stub-decisions.md` — the `Lexicon` decision with the plain-`dict` option it beat and
+  why, and the `assert_type`-over-calling pitfall with the negative test that confirmed it. New
+  file: this repo had no rationale home, and picking one was part of this retirement. `AGENTS.md`
+  states the resulting rules; the rejected alternative had nowhere else to live.
+- `AGENTS.md` — the four deliberate departures as a list, and the `assert_type` rule for probe
+  cases. Already there before this retirement.
+- The store, as `github.com-personal/repo-tasks/2026-09-07-remove-the-invoke-stubs-casts.md` — the
+  `DEFERRED` cast cleanup, which is that repo's work and could not be done from here.
+- `plans/2026-08-30-missing-collection-and-context-stubs.md` — its Verification item 3 already
+  records the consumer run this plan reported, so that outcome is not migrated a second time.
+
+Deliberately not migrated: the `repo-tasks` session's step-by-step transcript of what it ran, and
+the `invoke.vendor.lexicon` probe showing the old `Unknown | None`. Both are evidence for a
+conclusion that is now shipped and tested, and the commit history holds them if anyone doubts the
+conclusion.
