@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-09-06
+updated: 2026-09-07
 ---
 
 # Every re-exported name but `task` resolves to nothing where invoke itself is absent
@@ -237,12 +237,18 @@ Done in phase 1:
   its module.
 - `invoke-stubs/__init__.pyi` — unchanged in shape, as expected; only its header comment, which
   claimed everything but `.tasks` fell through to invoke.
-- `ruff.toml` — new, and not foreseen above. The generated modules are unreadable unformatted, and
-  `combine-as-imports` is needed or the sorter splits `__init__.pyi`'s re-export block one name per
-  line. It records the formatting rather than enforcing it.
+- `ruff.toml` — new, and not foreseen above. The generated modules are unreadable unformatted, so
+  the repo needed a config recording their formatting rather than enforcing it. Written here with
+  `combine-as-imports`, to keep `__init__.pyi`'s re-export block one statement; **replaced
+  2026-09-07 (9ae87d0) by the family's canonical config**, pulled with `inv configs.pull`, which has
+  no such setting. The sorter now splits that block into one `from X import (Y as Y,)` per name.
+  That is cosmetic and deliberate rather than a regression: the redundant alias survives, so every
+  name stays a public re-export, which the unit tier asserts.
 - `checks/verify.py`, `checks/usage_probe.py` — new, and not foreseen either. The repo had no gate
-  because it has no runtime code, which is why phase 1's defects reached a commit; these are the
-  four checks from section 5 made re-runnable at the next invoke bump.
+  because it has no runtime code, which is why phase 1's defects reached a commit; these were the
+  four checks from section 5 made re-runnable at the next invoke bump. **Both deleted 2026-09-07
+  (073c0d1)**, reimplemented as the two-tier pytest suite under `tests/` — same checks, see
+  Verification.
 - `pyproject.toml` — `version` 0.1.0 to 0.2.0, since consumers install by git URL and a push to
   `main` is the release.
 - `AGENTS.md`, `README.md` — the "keep it partial" rule and the two-things-fixed framing both
@@ -255,8 +261,9 @@ Not touched, and now deliberately not:
 ## Verification
 
 The consumer configuration is the test, and it is the one nobody was running: a repo with **invoke
-absent** type-checking a task module. Both probes are throwaway virtualenvs, not fixtures in this
-repo, since this repo has no suite of its own.
+absent** type-checking a task module. Both probes are throwaway virtualenvs; they were scratchpad
+scripts when this was written, and are now the `venv_with_invoke` / `venv_without_invoke` fixtures
+in `tests/integration/conftest.py`.
 
 1. **Passing.** Invoke absent, stubs installed: a module importing `Collection`, `Context`, `Exit`
    and `task` and calling `Collection.from_module`, `add_task`, `c.run` and `result.exited` reports
@@ -266,8 +273,13 @@ repo, since this repo has no suite of its own.
    `invoke.collection`, reports nothing at all. This is the regression test for both rejected
    shapes.
 
-The three added after section 5 now live in `checks/verify.py` rather than in a scratchpad, run as
-`python3 checks/verify.py`, and are each mechanical rather than written from imagination:
+The three added after section 5 now live in the pytest suite rather than in a scratchpad — they were
+`checks/verify.py` for one day and became `tests/` in 073c0d1 — and are each mechanical rather than
+written from imagination. Where each one is: 2a is `test_the_stub_package_is_internally_consistent`,
+2b the whole of `tests/unit/test_reexports.py` plus
+`test_every_reexported_name_resolves_without_invoke_installed`, 2c the `USAGE_PROBE` in
+`tests/integration/test_consumer_integration.py`, 2d
+`tests/integration/test_attributes_integration.py`.
 
 2a. **Passing.** Type-check the stub package against itself, `include`-ing the `invoke-stubs`
 directory as source. This is what found `Failure` and `Promise.__exit__`, and it is the cheapest of
@@ -292,14 +304,18 @@ broken — it tested declaration by substring, so `Result.exited` matched the id
 by putting two known defects back into `runners.pyi` and watching which checks fired: three did, and
 the one written specifically for that defect did not. It parses both sides now, and follows base
 classes so `warned_about_pty_fallback`, declared once on `Runner`, is not reported against `Local`.
-The negative test is the point — a check nobody has seen fail is a check nobody has tested.] 3.
-**Not run, and owed.** `repo-tasks`' `inv quality.type-check` is the only consumer with a real
-suite. Running it means installing an unreleased build into that repo's virtualenv, which is not a
-session working here doing it. What was done instead: its `tests/unit/test_types.py` assertions —
-`assert_type(ns, Collection)` and the `Callable[[Context], None] = <task>.body` declaration — were
-mirrored into probe 2 and pass there. That covers the contract but not the real suite, so the
-version bump should not be consumed there until someone runs it in that repo. 4. **Not run.**
-`ingesta`'s gate after its 59 suppressions are removed, which is likewise that repo's session to do.
-`reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate run after taking 0.2.0
-names every suppression that is now stale. That count going to near-zero is the outcome measure for
-the whole plan. 5. **Not run.** mypy, per the `UNVERIFIED` tag above.
+The negative test is the point — a check nobody has seen fail is a check nobody has tested.]
+
+3. **Run 2026-09-07, and passing — but it cost the consumer 14 casts.** `repo-tasks`'
+   `inv quality.type-check` is the only consumer with a real suite, and a session working in that
+   repo took 0.2.0 and ran it: 37 `reportAny` errors first, all on `ns.collections["<name>"]`, then
+   15 gate steps green and 616 tests passing once those lookups took `cast(Collection, ...)`. What
+   this section originally recorded — that its `tests/unit/test_types.py` assertions were mirrored
+   into probe 2 and pass there — covered the contract but not the suite, which is exactly the gap
+   that showed up. The full report, and the `Lexicon` question it raises for this repo, is
+   `plans/2026-09-07-consumer-verification-of-0-2-0.md`.
+4. **Not run.** `ingesta`'s gate after its 59 suppressions are removed, which is that repo's session
+   to do. `reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate run after taking
+   0.2.0 names every suppression that is now stale. That count going to near-zero is the outcome
+   measure for the whole plan.
+5. **Not run.** mypy, per the `UNVERIFIED` tag above.
