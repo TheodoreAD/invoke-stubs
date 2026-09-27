@@ -1,6 +1,6 @@
 ---
-status: in-progress
-updated: 2026-09-07
+status: landed
+updated: 2026-09-28
 ---
 
 # Every re-exported name but `task` resolves to nothing where invoke itself is absent
@@ -184,9 +184,8 @@ has to be re-checked at zero warnings, and none of them is blocked meanwhile.]
 that costs nothing — they resolve to invoke's inline annotations exactly as before. Section 4 below
 records why that is now the end state rather than a phase-2 backlog.
 
-[DEFERRED: removing `ingesta`'s 59 suppressions. They are in another repo, so they are that repo's
-session to make, and `reportUnnecessaryTypeIgnoreComment` will name each one on its next gate run
-after it takes 0.2.0.]
+Removing `ingesta`'s suppressions was deferred to that repo's own session, and it happened
+2026-09-12 on 0.3.0: 71 rather than 59, one commit, gate green. Verification item 4 has the numbers.
 
 The design was measured on basedpyright 1.39.10 only until 2026-09-07, when mypy 2.3.1 `--strict`
 was run over the same probe sources in both environments and reported no issues in either — so mypy
@@ -319,10 +318,20 @@ The negative test is the point — a check nobody has seen fail is a check nobod
    that showed up. The `Lexicon` question that raised is settled and shipped in 0.3.0; why it went
    that way rather than to a plain `dict` is `contributing/stub-decisions.md`. Reported by the
    now-retired `plans/2026-09-07-consumer-verification-of-0-2-0.md`.
-4. **Not run.** `ingesta`'s gate after its 59 suppressions are removed, which is that repo's session
-   to do. `reportUnnecessaryTypeIgnoreComment` is an error there, so its next gate run after taking
-   0.2.0 names every suppression that is now stale. That count going to near-zero is the outcome
-   measure for the whole plan.
+4. **Run 2026-09-12, and passing — the outcome measure for the whole plan.** `ingesta` went straight
+   from 0.1.0 to 0.3.0 in its own session, and `reportUnnecessaryTypeIgnoreComment` named **71**
+   stale rules, not the 59 predicted: a browser-driving tier had been added to its task modules
+   since the count, and `tasks/web.py` alone held 44. Suppressed lines went 80 → 33, removed in one
+   commit with the lock bump, gate green on 1174 tests. What they were is what this plan was for —
+   `Context` under `TYPE_CHECKING`, `c: Context` task parameters, and `c.run(...)` results now
+   typed. Re-read 2026-09-28 in its `tasks/`: every suppression left is the irreducible
+   `reportMissingModuleSource` from the pitfall in Context, the `repo_tasks` import (unresolvable
+   there by design) plus four `ns.add_collection` lines downstream of it, or unrelated `typer` and
+   `telethon` calls. **None is attributable to these stubs.** Also a negative result: the 0.2.0
+   `Collection.collections[...]` cost that took `repo-tasks` 14 casts did not appear, since nothing
+   there indexes a collection's members — the 0.2.0 → 0.3.0 churn was `repo-tasks`-shaped, not
+   general. Reported by the now-retired
+   `plans/2026-09-12-ingesta-took-0-3-0-and-what-it-removed.md`.
 5. **Run 2026-09-07, and passing.** mypy 2.3.1 `--strict`, both environments, no issues — and a test
    in the integration tier rather than a one-off, per the paragraph replacing the `UNVERIFIED` tag
    in section 4.

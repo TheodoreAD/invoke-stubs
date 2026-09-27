@@ -67,3 +67,13 @@ Fold the numbers above into the deferral in
 `plans/2026-08-30-missing-collection-and-context-stubs.md` and close it. Nothing else is owed: the
 consumer's lock is bumped, its suppressions are deleted, and the two landed in one commit because
 neither passes a gate without the other.
+
+## Migrated to
+
+- `plans/2026-08-30-missing-collection-and-context-stubs.md`, verification item 4: the 59 → 71 count
+  and why it grew, 80 → 33 lines, the three removal shapes, the surviving
+  `reportMissingModuleSource`, and the 0.2.0 negative result. Its `DEFERRED` on the consumer's
+  suppressions is closed there.
+- Not migrated: the per-module breakdown beyond `tasks/web.py`, which describes the consumer rather
+  than this repo, and "sixteen casts" for `repo-tasks`' 0.2.0 cost — this repo's own measurement,
+  verification item 3, says 14, and that is the figure kept.
