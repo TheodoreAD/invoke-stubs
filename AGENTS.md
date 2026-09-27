@@ -24,6 +24,10 @@ inv test.integration    # tests/integration — builds two throwaway venvs, ~5s
 inv test.all            # both tiers
 ```
 
+CI (`.github/workflows/ci.yml`) runs `inv quality.check` and `inv test.integration` on every push
+and pull request, on the 3.11 in `.python-version`, and `security.yml` calls the family's dependency
+audit. After changing a workflow, `inv test.workflows --job quality` runs it locally in Docker.
+
 **The tier split is forced by prerequisites, not preference.** The unit tier reads the stub package
 as files and asserts its structural invariants — every name `__init__.pyi` re-exports is declared in
 the module it names, every module it names is shipped, every re-export uses the `X as X` form.
