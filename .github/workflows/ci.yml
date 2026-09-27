@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: nothing here writes anything back to the repo, and the default token grant is
+# broader than that. persist-credentials: false for the same reason — this job does not push, and
+# the default leaves the job's token on disk for every later step to read. Both are what zizmor's
+# excessive-permissions and artipacked audits ask for, and both run in `inv quality.check`.
+permissions:
+  contents: read
+
+# A newer push supersedes an in-flight run for the same ref instead of racing it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # One interpreter, the 3.11 in .python-version, and no matrix. A push to main is a release here,
+  # since consumers install by git URL, so this is the check that stands behind it. What it checks is
+  # stub content, which does not vary by the interpreter running the checker, and the integration
+  # tier already builds its throwaway virtualenvs at 3.11 on its own.
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: ./.github/ci-bootstrap.sh
+      - run: inv quality.check
+      # The tier this repo exists for: a consumer with invoke absent type-checking clean, which
+      # needs two virtualenvs built from the index, so it needs the network the gate does not.
+      - run: inv test.integration
