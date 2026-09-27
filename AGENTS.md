@@ -53,11 +53,11 @@ invoke assigns to `self`, and that mypy `--strict` agrees with basedpyright in b
   generic in its value type, where invoke's subclasses a bare `dict`. The rule is still to mirror
   upstream — these exist because a stub that rejects valid code, or hands the consumer `Any`, is
   worse than one that diverges. The `Lexicon` one deleted 14 casts from the one real consumer.
-- **`inv configs.diff` will always report `dependency-groups.dev is missing: invoke-stubs`, and that
-  is correct.** The canonical manifest lists this package because every _other_ consumer needs it;
-  this repo is it, and taking the published build as a dev dependency would shadow the working tree
-  under test with whatever `main` last released. `configs.ensure-deps` is additive and re-adds the
-  entry on every run — remove it again rather than keeping it.
+- **`invoke-stubs` never goes in this repo's own dev group.** The canonical manifest lists this
+  package because every _other_ consumer needs it; this repo is it, and taking the published build
+  as a dev dependency would shadow the working tree under test with whatever `main` last released.
+  From repo-tasks 0.4.0, `configs.diff` and `configs.ensure-deps` skip that entry and print why. A
+  global `repo-tasks` tool older than that still adds it, so remove it again if it shows up.
 - **invoke is deliberately not a direct dependency**, here for two reasons rather than the usual
   one: a second `inv` on `PATH` would shadow the global repo-tasks tool, and the integration tier
   needs to control whether invoke is present at all.

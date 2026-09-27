@@ -17,10 +17,10 @@ Homepage = "https://github.com/TheodoreAD/invoke-stubs"
 # `uv tool install` daily driver — and here invoke's absence is load-bearing rather than
 # conventional: it is what the integration tier builds throwaway virtualenvs to supply, and a
 # second `inv` on PATH would shadow the tool that runs these tasks.
-# `invoke-stubs` itself is in the canonical manifest and `configs.ensure-deps` splices it in here
-# too, which is circular: this repo *is* that package, and taking the published build as a dev
-# dependency would shadow the working tree under test with whatever `main` last released. Removed
-# by hand; ensure-deps is additive and will re-add it on the next run.
+# `invoke-stubs` itself is in the canonical manifest, and depending on it here would be circular:
+# this repo *is* that package, and taking the published build as a dev dependency would shadow the
+# working tree under test with whatever `main` last released. repo-tasks 0.4.0+ skips the entry
+# naming the project it runs in, and `configs.diff`/`ensure-deps` print the skip rather than adding it.
 #
 # repo-tasks is present, unlike in every other consumer, and that is deliberate. It brings invoke
 # with it, which the family normally avoids because a second `inv` on PATH shadows the global tool
