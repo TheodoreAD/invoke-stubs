@@ -1,6 +1,6 @@
 [project]
 name = "invoke-stubs"
-version = "0.3.0"
+version = "0.3.1"
 description = "Partial PEP 561 type stubs for invoke: a @task decorator that keeps the decorated function's signature, and every name invoke re-exports resolvable without invoke installed."
 readme = "README.md"
 license = "MIT"
