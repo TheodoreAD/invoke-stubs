@@ -73,7 +73,7 @@ def test_every_stub_parses():
 
 
 def test_py_typed_still_says_partial():
-    """The marker is a decision, not a stage — see plans/2026-08-30-missing-collection-and-context-stubs.md.
+    """The marker is a decision, not a stage — see contributing/stub-decisions.md.
 
     Emptying it removes the fallback for every module this package does not ship, and buys nothing
     that shipping the modules did not already buy.

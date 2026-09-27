@@ -65,8 +65,8 @@ invoke assigns to `self`, and that mypy `--strict` agrees with basedpyright in b
   outright, so a consumer that _has_ invoke installed loses any name whose module is not shipped,
   and it buys nothing: the modules are what make these stubs authoritative, and with them in place a
   consumer type-checks clean without `allowedUntypedLibraries: ["invoke"]` while `partial` is still
-  set. Measured both ways — see `plans/2026-08-30-missing-collection-and-context-stubs.md`
-  section 4.
+  set. Measured both ways — see "Why does `py.typed` still say `partial`?" in
+  `contributing/stub-decisions.md`.
 - `__init__.pyi` mirrors the names invoke's own `__init__.py` re-exports, in `import X as X` form.
   When bumping against a new invoke release, diff it against `invoke/__init__.py` in that release.
   The canonical `ruff.toml` has no `combine-as-imports`, so the sorter splits that block into one

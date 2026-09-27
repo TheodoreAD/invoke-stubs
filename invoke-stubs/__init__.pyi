@@ -8,8 +8,8 @@
 # Every module named below is shipped here, plus `util`, which several of them need. `py.typed`
 # stays `partial` deliberately: `env`, `completion`, `main` and the vendored packages are not
 # shipped, and the marker is what keeps those resolvable for a consumer that does have invoke
-# installed. See plans/2026-08-30-missing-collection-and-context-stubs.md section 4 for why that is
-# the end state rather than a step towards a complete distribution.
+# installed. See contributing/stub-decisions.md, "Why does `py.typed` still say `partial`?", for why
+# that is the end state rather than a step towards a complete distribution.
 
 from typing import Any
 

@@ -35,7 +35,9 @@ wrong rather than merely absent:
   `AbstractContextManager` — a `with` block that raises nothing passes `None`.
 - `Task.__call__` returns `T`, the wrapped callable, rather than the callable's return value.
 
-That is five gaps, not three. See `2026-08-30-missing-collection-and-context-stubs.md` section 5.
+That is five gaps, not three. They were found by the review recorded in the now-retired
+`plans/2026-08-30-missing-collection-and-context-stubs.md`. The first two are among the departures
+`AGENTS.md` lists, and `tasks.pyi` fixes the third.
 
 ### And upstream moved, in a way that changes the question
 
