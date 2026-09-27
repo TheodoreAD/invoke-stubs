@@ -341,3 +341,29 @@ outside every run above; recursive, it reported `ParserContext` missing six attr
 nine, and the three parser classes four more. Declared in 0.3.0. The check was right and its reach
 was not, which is a different failure from the one the pitfall above records and reads identically
 from the outside: both are a green check that proves less than it appears to.
+
+## Migrated to
+
+- `contributing/stub-decisions.md`, "Why ship a `.pyi` per module rather than declare the classes in
+  `__init__.pyi`?": the inlining rejection and its class-identity diagnostic, why shipping a module
+  means declaring all of it, the transitive closure and where it stops, and the consumer's
+  71-suppression outcome (verification item 4).
+- Same file, "Why does `py.typed` still say `partial`?": section 4's measurement both ways, the
+  `invoke.env` cost of emptying the marker, why the modules had to come before any marker flip, and
+  mypy agreeing.
+- Same file, "How do I prove a stub change actually fixed something?": the `Failure` re-export
+  pitfall, and the one about a hand-edited site-packages that stopped being evidence.
+- `AGENTS.md` already had, and keeps: the `--createstub` gap for `self` attributes, the
+  invoke-in-the-consumer-venv pitfall, and the four departures from upstream, including
+  `DataProxy.__setitem__`, `Promise.__exit__` and `PathLike[str]` from section 5. `README.md`
+  already had the irreducible `reportMissingModuleSource`. The self-test (2a), the re-export tests
+  (2b), the usage probe (2c) and the attribute checks (2d and 2e) are the test suite, which already
+  says what each one covers.
+- The live `DEFERRED` on dropping `allowedUntypedLibraries: ["invoke"]` is filed for `repo-tasks`,
+  which owns the canonical config, as `2026-09-28-drop-the-invoke-untyped-library-allowance.md` in
+  its store mirror.
+
+Deliberately not migrated: the surface counts (16 submodules, 59 names, 160 members), which were
+true of invoke 3.0.3 and are a verification log rather than a reason; the Files-touched list, which
+is in git; and the `program.pyi`/`loader.pyi` import cycle, now fixed in code, where each imports
+from the defining module.
