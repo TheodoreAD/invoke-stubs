@@ -1,6 +1,6 @@
 ---
-status: idea
-updated: 2026-09-13
+status: landed
+updated: 2026-09-28
 depends_on: [repo-tasks]
 ---
 
@@ -149,5 +149,28 @@ validated by a green run afterwards, and here the local gate is the whole of the
 bump is the one step that could surprise — 100 commits of task code arriving at once, against a gate
 this repo runs from its own venv rather than from the global tool.
 
-[DEFERRED: record which way each prediction went, in this file, when the sweep runs. A prediction
-nobody scored is a guess.]
+## How the predictions went (swept 2026-09-28, to v0.5.0)
+
+Run as `2026-09-27-sweep-to-repo-tasks-v0-5-0.md`, which folded this one in.
+
+- **"`configs.diff` exits 1 on two config files and the `invoke-stubs` entry": wrong on both counts,
+  and for a reason the prediction could not see.** It was three files: `pyrightconfig.json` had
+  drifted too, because v0.5.0 rewrote its include comment after 09-13. And the `invoke-stubs` entry
+  was not reported at all. It was skipped with a printed reason, because the pin bump came first and
+  carried the producer-side fix. That is the order this plan asked for, and it is why the caution
+  about `ensure-deps` never came into play: `ensure-deps` ran and skipped the entry.
+- **"The local gate stays green through the pull": right.** Green at every intermediate state.
+- **"The pin bump is the one step that could surprise": no surprise.** 0.2.0 to 0.5.0, 170 commits
+  of task code, and the gate passed on the first run.
+- **"`venv.check` mismatches on first run": right.** It reported 3.14 against a declared 3.11, fixed
+  by the floor pin in the same session.
+
+## Migrated to
+
+- The `ensure-deps` self-reference: `AGENTS.md` and the `pyproject.toml` dependency-group comment,
+  both reworded 2026-09-28 for repo-tasks 0.4.0 and later.
+- The missing CI, which made the security-workflow item impossible: an open plan,
+  `2026-09-28-whether-this-repo-gets-ci.md`.
+- Deliberately not migrated: the packaged-`tests/` decision, which this plan already recorded as
+  staying deliberate and which nothing has reopened; the measured-behind table, now superseded; and
+  the report-mode wiring check, recorded above as not applying.

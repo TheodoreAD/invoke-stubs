@@ -1,6 +1,6 @@
 ---
-status: idea
-updated: 2026-09-07
+status: landed
+updated: 2026-09-28
 source_repo: github.com-personal/repo-tasks
 source_session: 52905ee0-50ff-4376-bd19-5ab4d9ca0a24.jsonl
 source_moment: 2026-09-07T15:18:45Z
@@ -49,10 +49,10 @@ wants is the one the stub has already committed to:
 class Promise(Result, AbstractContextManager["Promise"]):
 ```
 
-[UNVERIFIED: that the parameterised form type-checks clean against this repo's own suite — it was
-read off the consumer's report rather than tried here, since this session had no business editing
-this repo. `contributing/stub-decisions.md`'s own rule applies: put the defect back and watch which
-check fires, then fix it and watch that check pass.]
+Verified 2026-09-28, the way `contributing/stub-decisions.md` asks. With `reportMissingTypeArgument`
+turned on in the stub self-check, the check fired on this line and nowhere else. It passed once the
+base became `AbstractContextManager[Promise, None]`, and the whole integration tier, mypy included,
+stayed green.
 
 A second, smaller one from the same report, listed because it is the same class of thing and one
 line away: `create_io_threads` (`runners.pyi:36`) returns
@@ -63,11 +63,10 @@ check looks at it.
 
 ## Open questions
 
-[NEEDS CLARIFICATION: is `Promise` the only unparameterised generic base in the distribution, or is
-this one instance of a class of gap? A grep for base classes that take type arguments —
-`AbstractContextManager`, `Generic`, the `dict`/`list` subclasses — would answer it in one pass, and
-the answer decides whether this is a one-line fix or a check worth adding beside the attribute
-comparison that already runs.]
+Whether `Promise` was the only unparameterized generic base: it was. `reportMissingTypeArgument`
+over every stub reported exactly one diagnostic. The answer was both a one-line fix and a check
+worth keeping: the rule now runs in `test_the_stub_package_is_internally_consistent`, so the next
+bare generic fails there instead of in a consumer's completeness report.
 
 ## Recommended direction
 
@@ -75,3 +74,25 @@ Parameterise the base class, then re-run the consumer's report as the outcome me
 `inv quality.verify-types` should print 100% for `repo_tasks`, since this is the only remaining
 source of unknowns there. That makes the fix's effect visible outside this repo, which the attribute
 checks here cannot show.
+
+## Outcome
+
+Shipped in 0.3.1 (`1c4a806`). The original repro was re-run 2026-09-28 in a scratch virtualenv
+outside `repo-tasks`, holding `repo-tasks` v0.5.0 from its tag and nothing written to its tree.
+`basedpyright --verifytypes repo_tasks`, which is what its `quality.verify-types` runs, gave
+**99.3%** against the published 0.3.0 stubs. That is the same five-line chain from `ReportingLocal`
+to `Promise`, and 99.3 rather than 99.1 because `repo-tasks` itself moved since the filing. Against
+0.3.1 it gave **100%**, and it exited 0, which `--verifytypes` does only at full completeness.
+`repo-tasks` sees it once its lock takes 0.3.1.
+
+`create_io_threads`' `Callable[..., Any]` was left alone. It is a fully parameterized `Callable`,
+`reportMissingTypeArgument` does not flag it, and it contributes nothing to the 100%.
+
+## Migrated to
+
+- The check: `tests/integration/test_consumer_integration.py`, whose docstring says why the rule is
+  on and what it would have caught.
+- The fix: `invoke-stubs/runners.pyi`, where the type arguments are the ones `__enter__` and
+  `__exit__` already declare, so there is no departure to comment.
+- Deliberately not migrated: the evidence block, which is the consumer's report at 0.3.0 and is now
+  history.

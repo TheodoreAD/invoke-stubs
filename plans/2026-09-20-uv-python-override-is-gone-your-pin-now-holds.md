@@ -1,6 +1,6 @@
 ---
-status: idea
-updated: 2026-09-20
+status: landed
+updated: 2026-09-28
 source_repo: github.com-personal/power-user-linux-setup
 source_session: 70f5fe13-9f1a-40f4-84ac-5ce4fd98a163.jsonl
 source_moment: 2026-09-20T10:21:25Z
@@ -57,11 +57,9 @@ reads as "it did not work". Verify with `env -u UV_PYTHON uv run …`, or open a
 
 ## Open questions
 
-[NEEDS CLARIFICATION: whether this repo wants a `.python-version` now that one would actually be
-honoured. It was worth nothing while the variable outranked it, which is why most of the family
-never added one. The file only becomes load-bearing in the state this change creates, and it is only
-worth adding if something re-checks it later — `repo-tasks` has `inv venv.pin`/`venv.check` for
-exactly that.]
+Whether this repo wants a `.python-version` now that one would be honoured: yes. It is library tier,
+`repo-tasks` 0.5.0 is its dev dependency and carries `inv venv.pin`/`venv.check` to re-check the
+file, and it was added 2026-09-28 in `07b6bb8`.
 
 ## Recommended direction
 
@@ -76,3 +74,16 @@ exactly that.]
    them in code that shipped in a wheel.
 3. **Nothing about this repo's own declaration changes.** The tier rules are unaffected: libraries
    and anything another project installs stay at 3.11, and only applications start at 3.14.
+
+## Outcome
+
+All three steps done 2026-09-28. The outcome is in `2026-09-18-pin-the-library-floor-at-3-11.md`,
+the plan this one unblocked: the gate found nothing at 3.11. The pitfall above about sessions
+predating the change fired in the session that did the work, whose shell still exported
+`UV_PYTHON=3.14` nine days later.
+
+## Migrated to
+
+- Nothing repo-specific survives beyond `.python-version`. The pitfall about stale sessions belongs
+  to `power-user-linux-setup`, which owns the variable, and is filed there with this session's
+  measurement.

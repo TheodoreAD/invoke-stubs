@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-09-27
+status: landed
+updated: 2026-09-28
 source_repo: github.com-personal/repo-tasks
 source_session: bcf810d6-38c7-48d3-adfe-2ff30399d4c9.jsonl
 source_moment: 2026-09-27
@@ -40,3 +40,26 @@ excluded). `basedpyright` 1.39.10 (latest 1.40.1), `ruff` 0.16.6 (0.16.9), `shfm
 
 The smallest sweep of the five: run it as documented, take the lags with
 `inv deps.lock --package <name>`, and stamp last.
+
+## Outcome
+
+Run 2026-09-28, folding in `2026-09-13-repo-tasks-consumer-sweep.md`, which scores its own
+predictions. Commits in order: `6a92376` moves the pin from 0.2.0 to 0.5.0, `772433c` pulls
+`ruff.toml`, `pyrightconfig.json` and `pytest.ini` (the other three pulled identical), `7121b0c`
+takes five of the six lags, and `4ffb972` updates the docs. `configs.check-include` was clean.
+`stamp` is a no-op here, since this repo pins through its lock. The gate and the integration tier
+were green on Python 3.11.
+
+Two findings:
+
+- **`hadolint-py` stays at 2.14.0.1.** The dev group excludes 2.15.1.2 (`!=2.15.1.2`), so the sixth
+  lag is a deliberate choice.
+- **`deps.check-currency` reported "0 of 13 behind" when six were.** The harness shell exports
+  `FORCE_COLOR`, uv then colors the `(latest: …)` clause even when piped, and the parser drops every
+  colored line. Filed for `repo-tasks` as `2026-09-28-check-currency-misreads-colored-uv-output.md`.
+  The lags above came from the raw `uv tree --outdated` output instead.
+
+## Migrated to
+
+- Nothing new for this repo's docs beyond the `AGENTS.md` and `pyproject.toml` rewording in
+  `4ffb972`. Both findings are about `repo-tasks`, and the actionable one is filed there.
