@@ -1,0 +1,40 @@
+name: Security
+
+# A separate workflow from CI on purpose: a failure here means this project's dependency set has a
+# known advisory, not that its code is wrong. GitHub gives every workflow its own check run, name
+# and badge, so a green CI beside a red Security reads as exactly that, with nothing to configure.
+# Folding the audit into ci.yml would lose the distinction and put a network call inside the
+# workflow whose whole point is being offline and deterministic.
+#
+# The audit is defined once for the whole family and called rather than copied, so there is no
+# per-repo drift for anyone to track. The job installs nothing — `uv audit --locked` reads uv.lock
+# and queries OSV — so the same call works whatever this project's interface and dependencies are.
+#
+# Push-triggered, deliberately not scheduled. A red scheduled run needs a reader, and a project with
+# no reviewers has none — an unwatched scheduled job looks like coverage without being it. The gap
+# is real and accepted: an advisory landing in a week with no pushes is not seen until the next one.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Pinned to a commit, not @main: a moving ref would change this project's audit the moment the
+  # upstream default branch moved, in a repo nobody is touching. The trailing comment is the
+  # readable version, and `inv ci.check-actions` checks that it names this commit. Bump both
+  # together when that workflow changes.
+  #
+  # The rest of the family still pins d17c607 with a "# 2026-08-31" comment, from before repo-tasks
+  # had tags, and the comment check reports that as untrue. The workflow file is byte-identical
+  # between that commit and v0.5.0, so this pin is the same audit with a comment that can be
+  # checked.
+  audit:
+    uses: TheodoreAD/repo-tasks/.github/workflows/security-reusable.yml@9398008fa87d0215d0a7167226bfcb7d44ae4a82 # v0.5.0
