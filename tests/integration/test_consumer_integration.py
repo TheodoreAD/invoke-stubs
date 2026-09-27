@@ -158,6 +158,11 @@ def test_the_stub_package_is_internally_consistent(check_consumer, venv_with_inv
 
     Cheapest of the three and the one that found `Promise.__exit__` failing to satisfy
     `AbstractContextManager` — a defect no consumer probe reaches, because no consumer subclasses it.
+
+    `reportMissingTypeArgument` is off in `standard` and on here: a bare generic in a stub, such as
+    `Promise`'s unparameterized `AbstractContextManager` base, reads as `Unknown` and turns every
+    class downstream partially unknown in a consumer's `--verifytypes`, with no diagnostic in the
+    consumer's own code to say why.
     """
     (tmp_path / "pyrightconfig.json").write_text(
         json.dumps(
@@ -165,6 +170,7 @@ def test_the_stub_package_is_internally_consistent(check_consumer, venv_with_inv
                 "typeCheckingMode": "standard",
                 "include": [str(STUBS)],
                 "reportMissingModuleSource": "none",
+                "reportMissingTypeArgument": "error",
                 "venvPath": str(venv_with_invoke.parent.parent.parent),
                 "venv": venv_with_invoke.parent.parent.name,
             }
