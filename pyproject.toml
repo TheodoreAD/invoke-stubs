@@ -29,8 +29,12 @@ Homepage = "https://github.com/TheodoreAD/invoke-stubs"
 # venv rather than depending on a tool installed outside it. It does *not* reintroduce the cycle:
 # repo-tasks lists `invoke-stubs` in a dependency-group, and PEP 735 groups are never inherited
 # through a regular dependency.
+#
+# Pinned to a release tag, like every other consumer's bootstrap, so a bump takes released code
+# rather than whatever `main` holds. Bumping is this edit plus `inv deps.lock --package repo-tasks`;
+# the re-lock alone stays on the tag named here.
 dev = [
-  "repo-tasks @ git+https://github.com/TheodoreAD/repo-tasks",
+  "repo-tasks @ git+https://github.com/TheodoreAD/repo-tasks@v0.6.0",
   "basedpyright>=1.39.10",
   "pytest",
   "pytest-cov",
