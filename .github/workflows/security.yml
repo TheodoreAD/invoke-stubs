@@ -35,6 +35,6 @@ jobs:
   # The rest of the family still pins d17c607 with a "# 2026-08-31" comment, from before repo-tasks
   # had tags, and the comment check reports that as untrue. The workflow file is byte-identical
   # between that commit and v0.5.0, so this pin is the same audit with a comment that can be
-  # checked.
+  # checked. v0.6.0 left the file byte-identical again; the pin moved only so the check reads current.
   audit:
-    uses: TheodoreAD/repo-tasks/.github/workflows/security-reusable.yml@9398008fa87d0215d0a7167226bfcb7d44ae4a82 # v0.5.0
+    uses: TheodoreAD/repo-tasks/.github/workflows/security-reusable.yml@a2d9cf5ebf334e39261bedcc7f83d75eb6f8d3b5 # v0.6.0
