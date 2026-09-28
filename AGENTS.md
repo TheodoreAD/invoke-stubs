@@ -17,6 +17,11 @@ instead of taking whatever the globally installed tool happens to be — the two
 with it, which the family normally avoids because a second `inv` on `PATH` shadows the global tool
 with one that cannot import `repo_tasks`; that one can.
 
+**It is pinned to a release tag in `pyproject.toml`, so a sweep bumps the tag first.** repo-tasks'
+`contributing/consumer-sweep.md` opens with `inv deps.lock --package repo-tasks`, and against a
+tagged declaration that re-lock stays on the named tag and reports no change, which reads as
+"already current" when a newer release exists. Edit the tag, then re-lock.
+
 ```shell
 inv quality.precommit   # the gate — runs the unit tier, formatters and the type checker
 inv test.unit           # tests/unit — pure AST over the stubs, no venv, no network, ~0.1s
