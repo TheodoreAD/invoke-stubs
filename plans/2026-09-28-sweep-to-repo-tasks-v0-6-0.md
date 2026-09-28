@@ -1,5 +1,5 @@
 ---
-status: idea
+status: landed
 updated: 2026-09-28
 source_repo: github.com-personal/repo-tasks
 source_session: 44be2918-1669-4d16-9f77-56535cc6ddeb.jsonl
