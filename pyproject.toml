@@ -34,7 +34,7 @@ Homepage = "https://github.com/TheodoreAD/invoke-stubs"
 # rather than whatever `main` holds. Bumping is this edit plus `inv deps.lock --package repo-tasks`;
 # the re-lock alone stays on the tag named here.
 dev = [
-  "repo-tasks @ git+https://github.com/TheodoreAD/repo-tasks@v0.7.0",
+  "repo-tasks @ git+https://github.com/TheodoreAD/repo-tasks@v0.7.2",
   "basedpyright>=1.39.10",
   "pytest",
   "pytest-cov",
